@@ -41,9 +41,13 @@ class OrderDetailsPage extends GetView<OrderDetailsController> {
               title: order.plate,
               subtitle: order.number,
               leading: const _BackButton(),
-              trailing: order.status == OrderStatus.completed
-                  ? StatusBadge.payment(order.paymentStatus)
-                  : StatusBadge.order(order.status),
+              // White on the blue header; the status colors are made for white cards.
+              trailing: StatusBadge(
+                label: order.status == OrderStatus.completed
+                    ? 'pay.${order.paymentStatus.name}'.tr
+                    : 'status.${order.status.key}'.tr,
+                color: Colors.white,
+              ),
             ),
             Expanded(
               child: RefreshIndicator(

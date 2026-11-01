@@ -128,6 +128,7 @@ class HeaderButton extends StatelessWidget {
                 ),
                 child: Text(
                   badge > 9 ? '9+' : '$badge',
+                  textDirection: TextDirection.ltr,
                   style: TextStyle(fontSize: 9.sp, fontWeight: FontWeight.w700, color: Colors.white),
                 ),
               ),
