@@ -555,17 +555,6 @@ void main() {
     await _finish(tester);
   });
 
-  testWidgets('the staff add form warns about the password', (tester) async {
-    await _open(tester, _server(), Routes.staffRoute, locale: 'en');
-
-    await tester.tap(find.byIcon(Iconsax.add));
-    await _settle(tester);
-
-    expect(find.textContaining('temporary password'), findsOneWidget);
-
-    await _finish(tester);
-  });
-
   testWidgets('the staff schedule sheet saves its shifts', (tester) async {
     final server = _server();
     await _open(tester, server, Routes.staffRoute, locale: 'en');

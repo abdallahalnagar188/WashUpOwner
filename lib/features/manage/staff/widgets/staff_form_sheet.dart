@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
 
 import '../../../../commons/models/owner_account.dart';
 import '../../../../commons/models/staff_member.dart';
@@ -133,7 +132,6 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
       title: _creating ? 'staff.add'.tr : widget.member!.name,
       children: [
         if (_creating) ...[
-          NoticeCard(text: 'staff.passwordNotice'.tr, icon: Iconsax.info_circle),
           AppTextField(controller: _name, label: 'staff.name'.tr, onChanged: _touch),
           12.height,
           AppTextField(

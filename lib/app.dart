@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
@@ -37,6 +38,12 @@ class MyApp extends StatelessWidget {
             translations: AppTranslations(),
             locale: LanguageGetxController.cachedLocale,
             fallbackLocale: const Locale(LanguageGetxController.defaultLang),
+            supportedLocales: const [Locale('ar'), Locale('en')],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             initialBinding: binding ?? AppBinding(),
             getPages: appPages,
             initialRoute: Routes.splashRoute,

@@ -69,6 +69,9 @@ class ApiClient {
 
   Future<dynamic> delete(String path) async => (await _send('DELETE', path))['data'];
 
+  /// The whole reply, for calls that put something outside `data`.
+  Future<Map<String, dynamic>> postRaw(String path, {Object? body}) => _send('POST', path, body: body);
+
   /// The whole reply, for lists that carry `meta` with their `data`.
   Future<Map<String, dynamic>> getRaw(String path, {Map<String, dynamic>? query}) =>
       _send('GET', path, query: query);

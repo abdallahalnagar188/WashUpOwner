@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../commons/models/owner_account.dart';
 import '../../../../commons/models/staff_member.dart';
 import '../../common/controllers/manage_controller.dart';
+import '../widgets/temp_password_dialog.dart';
 
 class StaffController extends LoadController<StaffList> {
   static const List<String> roles = ['all', 'owner', 'manager', 'employee'];
@@ -59,19 +60,31 @@ class StaffController extends LoadController<StaffList> {
     required String branchId,
     required num maxDiscountPct,
     required Map<String, bool> permissions,
-  }) =>
-      write(
-        () => api.createStaff(
+  }) async {
+    String? password;
+    final ok = await write(
+      () async {
+        password = await api.createStaff(
           name: name,
           phone: phone,
           role: role,
           branchId: branchId,
           maxDiscountPct: maxDiscountPct,
           permissions: permissions,
-        ),
-        reload: () => load(silent: true),
-        doneText: 'staff.added'.tr,
+        );
+      },
+      reload: () => load(silent: true),
+      doneText: 'staff.added'.tr,
+    );
+    // Shown after the form closes, because this is its only appearance.
+    if (ok) {
+      Future<void>.delayed(
+        const Duration(milliseconds: 350),
+        () => Get.dialog<void>(TempPasswordDialog(password: password), barrierDismissible: false),
       );
+    }
+    return ok;
+  }
 
   Future<bool> saveMember(
     StaffMember member, {

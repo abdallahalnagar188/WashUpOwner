@@ -142,24 +142,26 @@ class VendorManageApi {
         await _client.getRaw('/vendor/staff', query: {'branchId': branchId, 'period': period}),
       );
 
-  /// The server puts the new account's temporary password in the reply's
-  /// `message`, which `ApiClient.post` does not return.
-  Future<void> createStaff({
+  /// Returns the new account's temporary password. The server only gives it
+  /// inside the reply's `message`, and only this once.
+  Future<String?> createStaff({
     required String name,
     required String phone,
     required String role,
     required String branchId,
     required num maxDiscountPct,
     required Map<String, bool> permissions,
-  }) =>
-      _client.post('/vendor/staff', body: {
-        'name': name,
-        'phone': phone,
-        'role': role,
-        'branchId': branchId,
-        'maxDiscountPct': maxDiscountPct,
-        'permissions': permissions,
-      });
+  }) async {
+    final reply = await _client.postRaw('/vendor/staff', body: {
+      'name': name,
+      'phone': phone,
+      'role': role,
+      'branchId': branchId,
+      'maxDiscountPct': maxDiscountPct,
+      'permissions': permissions,
+    });
+    return RegExp(r'المؤقتة\s+(\S+)').firstMatch(reply['message']?.toString() ?? '')?.group(1);
+  }
 
   Future<void> updateStaff(
     String id, {
