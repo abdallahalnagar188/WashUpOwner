@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/session_service.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
@@ -16,6 +17,9 @@ class MoreController extends GetxController {
       danger: true,
     );
     if (!ok) return;
+    if (Get.isRegistered<NotificationService>()) {
+      await Get.find<NotificationService>().unregisterDevice();
+    }
     await Get.find<SessionService>().signOut();
     await leaveToLogin();
   }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../../commons/models/dashboard_summary.dart';
 import '../../commons/models/live_board.dart';
 import '../../commons/models/order.dart';
@@ -9,6 +11,9 @@ import '../network/token_store.dart';
 
 /// Typed access to `/api/v1/vendor/*`. See docs/api-notes.md.
 class VendorApi {
+  /// Sent with the push token so the server can tell app builds apart.
+  static const String appVersion = '0.1.0';
+
   final ApiClient _client;
   final TokenStore _tokens;
 
@@ -132,6 +137,15 @@ class VendorApi {
     }) as Map<String, dynamic>;
     return data['id'] as String;
   }
+
+  Future<void> registerPush({required String token}) => _client.post('/vendor/push/register', body: {
+        'token': token,
+        'appVersion': appVersion,
+        'platform': Platform.isIOS ? 'ios' : 'android',
+      });
+
+  Future<void> unregisterPush({required String token}) =>
+      _client.post('/vendor/push/unregister', body: {'token': token});
 
   Future<int> unreadNotifications() async {
     final reply = await _client.getRaw('/vendor/notifications', query: {'page': 1});
