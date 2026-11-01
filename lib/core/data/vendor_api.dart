@@ -12,7 +12,7 @@ import '../network/token_store.dart';
 /// Typed access to `/api/v1/vendor/*`. See docs/api-notes.md.
 class VendorApi {
   /// Sent with the push token so the server can tell app builds apart.
-  static const String appVersion = '0.1.0';
+  static const String appVersion = '1.0.0';
 
   final ApiClient _client;
   final TokenStore _tokens;
