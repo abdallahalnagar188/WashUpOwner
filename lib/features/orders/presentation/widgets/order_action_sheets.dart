@@ -290,7 +290,7 @@ class _DiscountSheetState extends State<_DiscountSheet> {
   }
 
   bool get _valid =>
-      (_number ?? 0) > 0 && _problem == null && _reason.text.trim().length >= 2;
+      (_number ?? 0) > 0 && _problem == null && _reason.text.trim().length >= 3;
 
   @override
   Widget build(BuildContext context) {

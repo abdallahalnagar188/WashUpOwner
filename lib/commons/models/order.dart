@@ -185,6 +185,7 @@ class OrderDetails {
   final num total;
   final String? paymentMethod;
   final String? code;
+  final String? cancelReason;
   final List<OrderItem> items;
   final List<OrderTimelineEntry> timeline;
   final List<OrderNote> notes;
@@ -212,6 +213,7 @@ class OrderDetails {
     required this.total,
     this.paymentMethod,
     this.code,
+    this.cancelReason,
     required this.items,
     required this.timeline,
     required this.notes,
@@ -229,6 +231,7 @@ class OrderDetails {
     final vehicle = json['vehicle'] as Map<String, dynamic>?;
     final staff = json['staff'] as Map<String, dynamic>?;
     final discount = order['discount'] as Map<String, dynamic>?;
+    final cancel = order['cancel'] as Map<String, dynamic>?;
     final make = vehicle?['make']?.toString();
     final model = vehicle?['model']?.toString();
     return OrderDetails(
@@ -248,6 +251,7 @@ class OrderDetails {
       total: order['total'] as num? ?? 0,
       paymentMethod: order['paymentMethod'] as String?,
       code: order['code'] as String?,
+      cancelReason: cancel?['reason']?.toString(),
       items: (order['items'] as List? ?? const [])
           .map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
           .toList(),

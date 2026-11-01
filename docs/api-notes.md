@@ -48,6 +48,8 @@ documentation yet. Replace this file when the web developer shares one.
 
 ## Management
 
+A cancelled order carries `order.cancel` `{reason, byType, byId, at}`. `reason` is free text or a code such as `expired_unconfirmed`, `expired_not_started` or the customer app's `cancel.r1`.
+
 - `GET /vendor/schedule?branchId&date`, `POST /vendor/schedule/blocks` `{branchId, start, end, reason}`, `DELETE /vendor/schedule/blocks/:id`
 - `GET|POST /vendor/services`, `PATCH /vendor/services/:id`
 - `GET|POST /vendor/offers`, `PATCH /vendor/offers/:id`, `POST /vendor/offers/:id/status` `{enabled}`

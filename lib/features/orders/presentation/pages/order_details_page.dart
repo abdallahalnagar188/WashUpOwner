@@ -58,6 +58,10 @@ class OrderDetailsPage extends GetView<OrderDetailsController> {
                   physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 24.h),
                   children: [
+                    if (order.cancelReason != null) ...[
+                      FadeSlideIn(child: _CancelReasonCard(reason: order.cancelReason!)),
+                      12.height,
+                    ],
                     FadeSlideIn(child: _InfoCard(order: order)),
                     12.height,
                     FadeSlideIn(
@@ -89,6 +93,42 @@ class OrderDetailsPage extends GetView<OrderDetailsController> {
           ],
         );
       }),
+    );
+  }
+}
+
+/// Reasons the system or the customer app send as codes read as text; anything
+/// else is what staff typed.
+String cancelReasonText(String reason) {
+  final key = 'cancelReason.$reason';
+  return key.tr == key ? reason : key.tr;
+}
+
+class _CancelReasonCard extends StatelessWidget {
+  final String reason;
+
+  const _CancelReasonCard({required this.reason});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return RoundedContainer(
+      padding: EdgeInsets.all(16.r),
+      child: Row(
+        children: [
+          Icon(Iconsax.info_circle, size: 22.r, color: AppColors.danger),
+          12.width,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('orders.cancelReason'.tr, style: text.bodySmall),
+                Text(cancelReasonText(reason), style: text.bodyMedium),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
