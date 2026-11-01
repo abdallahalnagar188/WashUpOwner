@@ -1,18 +1,25 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../../../../commons/models/dashboard_summary.dart';
-import '../../../../core/data/owner_repo.dart';
+import '../../../../core/data/vendor_api.dart';
 import '../../../../core/enums/enums.dart';
 import '../../../../core/services/session_service.dart';
 import '../../../main/presentation/controllers/main_controller.dart';
 
 class HomeController extends GetxController {
-  final _repo = Get.find<OwnerRepo>();
+  static const Duration pollEvery = Duration(seconds: 30);
+
+  final _api = Get.find<VendorApi>();
   final session = Get.find<SessionService>();
 
   final period = DashboardPeriod.today.obs;
   final summary = Rxn<DashboardSummary>();
-  final failed = false.obs;
+  final unread = 0.obs;
+  final error = RxnString();
+
+  Timer? _poll;
 
   // Only the newest request may fill the screen.
   int _requestId = 0;
@@ -21,10 +28,21 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     load();
+    _startPolling();
     ever(session.branchId, (_) => _reload());
+    ever(session.orderChanges, (_) => load());
     ever(Get.find<MainController>().selectedIndex, (index) {
-      if (index == MainController.homeTab) load();
+      _poll?.cancel();
+      if (index == MainController.homeTab) {
+        load();
+        _startPolling();
+      }
     });
+  }
+
+  void _startPolling() {
+    _poll?.cancel();
+    _poll = Timer.periodic(pollEvery, (_) => load());
   }
 
   void selectPeriod(DashboardPeriod value) {
@@ -35,20 +53,24 @@ class HomeController extends GetxController {
 
   Future<void> load() async {
     final id = ++_requestId;
-    failed.value = false;
+    error.value = null;
     try {
-      final result = await _repo.dashboard(
-        period: period.value,
-        branchId: session.branchId.value,
-      );
+      final result = await _api.dashboard(period: period.value, branchId: session.branchId.value);
       if (id == _requestId) summary.value = result;
-    } catch (_) {
-      if (id == _requestId) failed.value = true;
+      unread.value = await _api.unreadNotifications();
+    } catch (e) {
+      if (id == _requestId) error.value = e.toString();
     }
   }
 
   void _reload() {
     summary.value = null;
     load();
+  }
+
+  @override
+  void onClose() {
+    _poll?.cancel();
+    super.onClose();
   }
 }

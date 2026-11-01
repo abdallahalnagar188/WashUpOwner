@@ -6,6 +6,7 @@ import '../../../../core/utils/utils.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
 import '../../../live/presentation/controllers/live_controller.dart';
 import '../../../main/presentation/controllers/main_controller.dart';
+import '../../../orders/presentation/controllers/orders_controller.dart';
 
 class MoreController extends GetxController {
   Future<void> logout() async {
@@ -16,10 +17,15 @@ class MoreController extends GetxController {
     );
     if (!ok) return;
     await Get.find<SessionService>().signOut();
+    await leaveToLogin();
+  }
+
+  /// The next account must not see this one's screens.
+  static Future<void> leaveToLogin() async {
     await Get.offAllNamed(Routes.loginRoute);
-    // The next account must not see this one's screens.
     Get.delete<HomeController>(force: true);
     Get.delete<LiveController>(force: true);
+    Get.delete<OrdersController>(force: true);
     Get.delete<MainController>(force: true);
   }
 }

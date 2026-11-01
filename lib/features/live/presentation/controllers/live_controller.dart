@@ -3,27 +3,24 @@ import 'dart:async';
 import 'package:get/get.dart';
 
 import '../../../../commons/models/live_board.dart';
-import '../../../../core/data/owner_repo.dart';
-import '../../../../core/enums/enums.dart';
+import '../../../../core/data/vendor_api.dart';
 import '../../../../core/services/session_service.dart';
-import '../../../../core/utils/utils.dart';
 import '../../../main/presentation/controllers/main_controller.dart';
 
 class LiveController extends GetxController {
-  static const Duration pollEvery = Duration(seconds: 20);
+  /// Same pace as the dashboard's live page.
+  static const Duration pollEvery = Duration(seconds: 15);
 
-  final _repo = Get.find<OwnerRepo>();
+  final _api = Get.find<VendorApi>();
   final _session = Get.find<SessionService>();
 
   final board = Rxn<LiveBoard>();
-  final failed = false.obs;
+  final error = RxnString();
   final column = LiveColumn.waiting.obs;
-  final busyOrderId = RxnString();
 
   Timer? _poll;
 
-  // Only the newest request may fill the screen, so a poll that was already on
-  // its way cannot undo the result of an action.
+  // Only the newest request may fill the screen.
   int _requestId = 0;
 
   @override
@@ -34,6 +31,7 @@ class LiveController extends GetxController {
       board.value = null;
       load();
     });
+    ever(_session.orderChanges, (_) => load());
     ever(Get.find<MainController>().selectedIndex, (index) {
       _setPolling(index == MainController.liveTab);
     });
@@ -49,45 +47,12 @@ class LiveController extends GetxController {
 
   Future<void> load() async {
     final id = ++_requestId;
-    failed.value = false;
+    error.value = null;
     try {
-      final result = await _repo.live(branchId: _session.branchId.value);
+      final result = await _api.live(branchId: _session.branchId.value);
       if (id == _requestId) board.value = result;
-    } catch (_) {
-      if (id == _requestId) failed.value = true;
-    }
-  }
-
-  bool canRun(LiveAction action) => _session.can(action.permission);
-
-  Future<void> run(LiveOrder order) async {
-    final action = order.nextAction;
-    if (action == null || busyOrderId.value != null) return;
-    if (!canRun(action)) {
-      Utils.getSnakBar(message: 'live.noPermission'.tr, type: TosterTypes.warning);
-      return;
-    }
-    final id = ++_requestId;
-    busyOrderId.value = order.id;
-    try {
-      final result = await _repo.runAction(
-        orderId: order.id,
-        action: action,
-        branchId: _session.branchId.value,
-      );
-      if (id == _requestId) board.value = result;
-      Utils.getSnakBar(
-        message: (action == LiveAction.collect ? 'live.collected' : 'live.done').tr,
-        type: TosterTypes.sucsses,
-      );
-    } on OwnerRepoException catch (e) {
-      Utils.getSnakBar(message: e.messageKey.tr, type: TosterTypes.failed);
-      await load();
-    } catch (_) {
-      Utils.getSnakBar(message: 'live.actionFailed'.tr, type: TosterTypes.failed);
-      await load();
-    } finally {
-      busyOrderId.value = null;
+    } catch (e) {
+      if (id == _requestId) error.value = e.toString();
     }
   }
 

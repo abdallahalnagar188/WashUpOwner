@@ -1,5 +1,5 @@
-import 'live_board.dart';
 import 'localized_text.dart';
+import 'order.dart';
 
 class DashboardKpi {
   final String key;
@@ -29,7 +29,7 @@ class LiveBranch {
   final int paymentPending;
   final int baysBusy;
   final int capacity;
-  final List<StaffOnShift> staffOnShift;
+  final List<NamedRef> staffOnShift;
   final num revenueToday;
 
   const LiveBranch({
@@ -59,13 +59,13 @@ class LiveBranch {
         baysBusy: (json['baysBusy'] as num?)?.toInt() ?? 0,
         capacity: (json['capacity'] as num?)?.toInt() ?? 0,
         staffOnShift: (json['staffOnShift'] as List? ?? const [])
-            .map((s) => StaffOnShift.fromJson(s as Map<String, dynamic>))
+            .map((s) => NamedRef.fromJson(s as Map<String, dynamic>))
             .toList(),
         revenueToday: json['revenueToday'] as num? ?? 0,
       );
 }
 
-/// Shape not confirmed yet: `alerts` was empty when checked.
+/// `alerts` was empty when checked, so only these common fields are read.
 class DashboardAlert {
   final String id;
   final LocalizedText title;
@@ -96,7 +96,7 @@ class DashboardSummary {
   final DateTime generatedAt;
   final List<DashboardKpi> kpis;
   final List<LiveBranch> liveBranches;
-  final List<LiveOrder> carsInside;
+  final List<OrderSummary> carsInside;
   final List<DashboardAlert> alerts;
   final List<ChartPoint> revenueByHour;
 
@@ -127,7 +127,7 @@ class DashboardSummary {
           .map((b) => LiveBranch.fromJson(b as Map<String, dynamic>))
           .toList(),
       carsInside: (json['carsInside'] as List? ?? const [])
-          .map((o) => LiveOrder.fromJson(o as Map<String, dynamic>))
+          .map((o) => OrderSummary.fromJson(o as Map<String, dynamic>))
           .toList(),
       alerts: (json['alerts'] as List? ?? const [])
           .map((a) => DashboardAlert.fromJson(a as Map<String, dynamic>))

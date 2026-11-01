@@ -6,6 +6,7 @@ import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 
+/// Bars rise from the bottom when the chart appears.
 class RevenueBars extends StatelessWidget {
   final List<ChartPoint> points;
 
@@ -17,8 +18,8 @@ class RevenueBars extends StatelessWidget {
     final highest = points.fold<num>(0, (max, p) => p.value > max ? p.value : max);
     final barArea = 96.h;
     return RoundedContainer(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      padding: EdgeInsets.all(14.r),
+      margin: EdgeInsets.symmetric(horizontal: 20.w),
+      padding: EdgeInsets.all(16.r),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -27,12 +28,17 @@ class RevenueBars extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    height: highest == 0 ? 2.h : barArea * (point.value / highest) + 2.h,
-                    margin: EdgeInsets.symmetric(horizontal: 6.w),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.ribbonGradient,
-                      borderRadius: BorderRadius.circular(6.r),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: highest == 0 ? 0 : point.value / highest),
+                    duration: const Duration(milliseconds: 750),
+                    curve: Curves.easeOutCubic,
+                    builder: (_, share, __) => Container(
+                      height: barArea * share + 3.h,
+                      margin: EdgeInsets.symmetric(horizontal: 5.w),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.ribbonGradient,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
                     ),
                   ),
                   6.height,

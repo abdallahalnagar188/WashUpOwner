@@ -54,16 +54,16 @@ class _AlertTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return RoundedContainer(
-      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 10.h),
+      margin: EdgeInsets.fromLTRB(20.w, 0, 20.w, 10.h),
       padding: EdgeInsets.all(14.r),
       child: Row(
         children: [
           Container(
-            width: 38.r,
-            height: 38.r,
+            width: 40.r,
+            height: 40.r,
             decoration: BoxDecoration(
               color: AppColors.tint(color),
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(13.r),
             ),
             child: Icon(icon, size: 20.r, color: color),
           ),

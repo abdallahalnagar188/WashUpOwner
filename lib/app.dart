@@ -13,7 +13,9 @@ import 'core/utils/responsive_helper.dart';
 import 'core/utils/system_ui.dart';
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final AppBinding? binding;
+
+  const MyApp({super.key, this.binding});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +37,7 @@ class MyApp extends StatelessWidget {
             translations: AppTranslations(),
             locale: LanguageGetxController.cachedLocale,
             fallbackLocale: const Locale(LanguageGetxController.defaultLang),
-            initialBinding: AppBinding(),
+            initialBinding: binding ?? AppBinding(),
             getPages: appPages,
             initialRoute: Routes.splashRoute,
             builder: (context, child) {

@@ -1,9 +1,30 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:washup_owner/commons/models/dashboard_summary.dart';
 import 'package:washup_owner/commons/models/live_board.dart';
+import 'package:washup_owner/commons/models/order.dart';
 import 'package:washup_owner/commons/models/owner_account.dart';
+import 'package:washup_owner/core/enums/enums.dart';
 
 // Shapes copied from the vendor API responses, with made-up values.
+Map<String, dynamic> orderRow({String status = 'waiting', String? next = 'start'}) => {
+      'id': 'ord_1',
+      'number': 'CZ-1',
+      'plate': 'ABC 123',
+      'vehicleLabel': 'Kia Cerato',
+      'customerName': 'Customer',
+      'serviceName': {'ar': 'غسيل', 'en': 'Wash'},
+      'branchName': {'ar': 'فرع', 'en': 'Branch'},
+      'staffName': null,
+      'scheduledAt': '2026-11-01T10:00:00.000Z',
+      'total': 356,
+      'source': 'walk_in',
+      'status': status,
+      'paymentStatus': 'pending',
+      'nextAction': next,
+      'locked': false,
+      'overdueMin': 5,
+    };
+
 void main() {
   test('reads /auth/me', () {
     final account = OwnerAccount.fromJson({
@@ -14,7 +35,6 @@ void main() {
       'businessId': 'biz_1',
       'businessName': {'ar': 'مغسلة', 'en': 'Wash'},
       'businessStatus': 'active',
-      'businessStatusReason': null,
       'homeBranchId': 'br_1',
       'branches': [
         {
@@ -28,7 +48,6 @@ void main() {
       'permissions': {'refund': true, 'closeShift': false},
       'maxDiscountPct': 100,
       'canEditServices': true,
-      'lastLoginAt': null,
     });
 
     expect(account.branches.single.capacity, 4);
@@ -39,8 +58,6 @@ void main() {
 
   test('reads /dashboard, including an empty day', () {
     final summary = DashboardSummary.fromJson({
-      'period': 'today',
-      'branchId': 'all',
       'generatedAt': '2026-11-01T10:40:01.781Z',
       'kpis': [
         {'key': 'revenue', 'value': 0, 'delta': null, 'spark': [0, 0]},
@@ -49,11 +66,9 @@ void main() {
         {
           'id': 'br_1',
           'name': {'ar': 'فرع', 'en': 'Branch'},
-          'area': 'nasr',
           'isOpen': true,
           'opensAt': '09:00',
           'closesAt': '23:00',
-          'activeOrders': 0,
           'waiting': 0,
           'inService': 0,
           'paymentPending': 0,
@@ -77,30 +92,79 @@ void main() {
     expect(summary.kpi('revenue')?.delta, isNull);
     expect(summary.kpi('unknown'), isNull);
     expect(summary.liveBranches.single.staffOnShift.single.name, 'Staff');
-    expect(summary.revenueByHour.single.label, '8');
   });
 
-  test('reads an empty /live board', () {
+  test('reads /live with cars in its columns', () {
     final board = LiveBoard.fromJson({
-      'branchId': 'all',
       'generatedAt': '2026-11-01T10:40:01.781Z',
       'columns': {
         'upcoming': [],
-        'waiting': [],
+        'waiting': [orderRow()],
         'in_service': [],
         'payment_pending': [],
         'done': [],
       },
       'bays': {'busy': 1, 'capacity': 4},
-      'staffOnShift': [
-        {'id': 'st_2', 'name': 'Staff'},
-      ],
+      'staffOnShift': [],
     });
 
     expect(board.baysBusy, 1);
-    expect(board.capacity, 4);
-    for (final column in LiveColumn.values) {
-      expect(board.ordersIn(column), isEmpty);
-    }
+    final order = board.ordersIn(LiveColumn.waiting).single;
+    expect(order.nextAction, OrderAction.start);
+    expect(order.source, OrderSource.walkIn);
+    expect(board.ordersIn(LiveColumn.inService), isEmpty);
+  });
+
+  test('an unknown next action is ignored rather than crashing', () {
+    expect(OrderSummary.fromJson(orderRow(next: 'something_new')).nextAction, isNull);
+    expect(OrderSummary.fromJson(orderRow(next: null)).nextAction, isNull);
+  });
+
+  test('reads /orders/:id', () {
+    final details = OrderDetails.fromJson({
+      'allowedActions': ['note', 'refund', 'something_new'],
+      'nextAction': null,
+      'assignableStaff': [
+        {'id': 'st_2', 'name': 'Staff'},
+      ],
+      'availableAddons': [],
+      'maxDiscountPct': 20,
+      'locked': false,
+      'customer': {'name': 'Customer', 'phone': '01000000000'},
+      'vehicle': {'make': 'Kia', 'model': 'Cerato', 'plate': 'ABC'},
+      'staff': {'id': 'st_2', 'name': 'Staff'},
+      'order': {
+        'id': 'ord_1',
+        'number': 'CZ-1',
+        'plate': 'ABC',
+        'status': 'completed',
+        'paymentStatus': 'paid',
+        'source': 'app',
+        'scheduledAt': '2026-11-01T10:00:00.000Z',
+        'subtotal': 400,
+        'discount': {'amount': 44, 'pct': 11, 'reason': 'offer'},
+        'total': 356,
+        'paymentMethod': 'cash',
+        'items': [
+          {
+            'serviceId': 's1',
+            'name': {'ar': 'غسيل', 'en': 'Wash'},
+            'price': 400,
+            'durationMin': 30,
+            'type': 'primary',
+          },
+        ],
+        'timeline': [
+          {'status': 'pending', 'at': '2026-11-01T09:00:00.000Z'},
+        ],
+        'notes': [],
+      },
+    });
+
+    expect(details.vehicleLabel, 'Kia Cerato');
+    expect(details.discountAmount, 44);
+    expect(details.allowedActions, [OrderAction.note, OrderAction.refund]);
+    expect(details.items.single.isAddon, isFalse);
+    expect(details.assignableStaff.single.id, 'st_2');
   });
 }

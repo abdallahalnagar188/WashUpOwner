@@ -1,0 +1,104 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:iconsax/iconsax.dart';
+
+import '../../../../commons/models/order.dart';
+import '../../../../commons/widgets/common_widgets.dart';
+import '../../../../commons/widgets/effects/pressable.dart';
+import '../../../../core/constance/app_colors.dart';
+import '../../../../core/enums/enums.dart';
+import '../../../../core/extensions/sized_box_extension.dart';
+import '../../../../core/helpers/format_helper.dart';
+import '../../../../core/routing/app_routes.dart';
+
+/// One order in a list. The whole card opens its details, where every action
+/// lives.
+class OrderCard extends StatelessWidget {
+  final OrderSummary order;
+
+  const OrderCard({super.key, required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final next = order.nextAction;
+    return Pressable(
+      onTap: () => Get.toNamed(Routes.orderRoute, arguments: order.id),
+      child: RoundedContainer(
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.all(14.r),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42.r,
+                  height: 42.r,
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  child: Icon(Iconsax.car, size: 21.r, color: AppColors.primary),
+                ),
+                12.width,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(order.plate, style: text.titleMedium),
+                      Text(
+                        [order.vehicleLabel, order.customerName]
+                            .where((part) => part.isNotEmpty)
+                            .join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                order.status == OrderStatus.completed
+                    ? StatusBadge.payment(order.paymentStatus)
+                    : StatusBadge.order(order.status),
+              ],
+            ),
+            10.height,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    order.serviceName.value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.bodyMedium,
+                  ),
+                ),
+                Text(FormatHelper.money(order.total), style: text.titleSmall),
+              ],
+            ),
+            4.height,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${FormatHelper.dayTime(order.scheduledAt)} · ${'source.${order.source.key}'.tr} · ${order.number}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.labelSmall,
+                  ),
+                ),
+                if (next != null)
+                  Text(
+                    'action.${next.key}'.tr,
+                    style: text.labelMedium?.copyWith(color: AppColors.primary),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
