@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../commons/widgets/common_widgets.dart';
+import '../../../../core/enums/enums.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 import '../../../../core/utils/system_ui.dart';
 import '../../../main/presentation/controllers/main_controller.dart';
@@ -67,7 +68,15 @@ class HomePage extends GetView<HomeController> {
                         for (final branch in summary.liveBranches) _enter(2, BranchNowCard(branch: branch)),
                         _enter(3, SectionHeader(title: 'home.carsInside'.tr)),
                         _enter(3, CarsInsideSection(cars: summary.carsInside)),
-                        _enter(4, SectionHeader(title: 'home.revenueByHour'.tr)),
+                        _enter(
+                          4,
+                          SectionHeader(
+                            title: (controller.period.value == DashboardPeriod.today
+                                    ? 'home.revenueByHour'
+                                    : 'home.revenueByDay')
+                                .tr,
+                          ),
+                        ),
                         _enter(4, RevenueBars(points: summary.revenueByHour)),
                         8.height,
                       ],

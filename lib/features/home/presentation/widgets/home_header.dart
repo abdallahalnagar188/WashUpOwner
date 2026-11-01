@@ -223,18 +223,29 @@ class _Revenue extends GetView<HomeController> {
   }
 }
 
-/// Only the number: the label stays in the expanded header.
 class _CollapsedRevenue extends GetView<HomeController> {
   const _CollapsedRevenue();
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => AnimatedNumber(
-        value: controller.summary.value?.kpi('revenue')?.value ?? 0,
-        format: FormatHelper.money,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
-      ),
+    final text = Theme.of(context).textTheme;
+    return Row(
+      children: [
+        Text(
+          'home.revenueShort'.tr,
+          style: text.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.8)),
+        ),
+        8.width,
+        Expanded(
+          child: Obx(
+            () => AnimatedNumber(
+              value: controller.summary.value?.kpi('revenue')?.value ?? 0,
+              format: FormatHelper.money,
+              style: text.titleLarge?.copyWith(color: Colors.white),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
