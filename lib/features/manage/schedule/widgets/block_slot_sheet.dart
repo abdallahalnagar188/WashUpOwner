@@ -104,7 +104,7 @@ class _BlockSlotSheetState extends State<BlockSlotSheet> {
           onTap: (value) => setState(() => _reason.text = value),
         ),
         10.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _reason,
           maxLines: 2,
           maxLength: 160,

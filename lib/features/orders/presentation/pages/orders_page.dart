@@ -35,16 +35,17 @@ class OrdersPage extends GetView<OrdersController> {
           ),
         ),
         12.height,
-        Obx(
-          () => SlidingTabs<String>(
+        Obx(() {
+          final counts = {...controller.counts};
+          return SlidingTabs<String>(
             // A new key per view, so the pill does not cross between two tab sets.
             key: ValueKey(controller.view.value),
             items: OrdersController.tabs[controller.view.value]!,
             selected: controller.tab.value,
-            label: (tab) => _tabLabel(tab, controller.counts[tab]),
+            label: (tab) => _tabLabel(tab, counts[tab]),
             onSelect: controller.selectTab,
-          ),
-        ),
+          );
+        }),
         10.height,
         Expanded(
           child: Obx(

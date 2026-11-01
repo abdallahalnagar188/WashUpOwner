@@ -6,6 +6,7 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../../commons/models/order.dart';
 import '../../../../commons/widgets/common_widgets.dart';
+import '../../../../commons/widgets/sheets/app_sheet.dart';
 import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 import '../../../../core/helpers/format_helper.dart';
@@ -36,12 +37,12 @@ Future<void> showMoreActions(
   final text = Theme.of(context).textTheme;
   return showModalBottomSheet<void>(
     context: context,
-    shape: _sheetShape,
+    shape: appSheetShape,
     builder: (sheet) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          12.height,
+          AppSheetHeader(title: 'orders.moreActions'.tr),
           for (final action in actions)
             ListTile(
               leading: Icon(
@@ -68,10 +69,6 @@ Future<void> showMoreActions(
 
 bool _isDanger(OrderAction action) =>
     action == OrderAction.cancel || action == OrderAction.noShow || action == OrderAction.refund;
-
-ShapeBorder get _sheetShape => RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(26.r)),
-    );
 
 /// Runs [action], asking first for whatever the server needs with it.
 Future<void> startOrderAction(
@@ -115,36 +112,26 @@ Future<void> startOrderAction(
       );
       if (addon != null) await controller.run(action, {'serviceId': addon.id});
     case OrderAction.collectPayment:
-      final fields = await _sheet<Map<String, dynamic>>(context, _CollectSheet(total: order.total));
+      final fields = await showAppSheet<Map<String, dynamic>>(context, _CollectSheet(total: order.total));
       if (fields != null) await controller.run(action, fields);
     case OrderAction.discount:
-      final fields = await _sheet<Map<String, dynamic>>(
+      final fields = await showAppSheet<Map<String, dynamic>>(
         context,
         _DiscountSheet(order: order),
       );
       if (fields != null) await controller.run(action, fields);
     case OrderAction.note:
-      final value = await _sheet<String>(context, _TextSheet(title: 'action.note'.tr));
+      final value = await showAppSheet<String>(context, _TextSheet(title: 'action.note'.tr));
       if (value != null) await controller.run(action, {'text': value});
     case OrderAction.cancel:
     case OrderAction.refund:
-      final value = await _sheet<String>(
+      final value = await showAppSheet<String>(
         context,
         _TextSheet(title: 'action.${action.key}'.tr, hint: 'sheet.reason'.tr, danger: true),
       );
       if (value != null) await controller.run(action, {'reason': value});
   }
 }
-
-Future<T?> _sheet<T>(BuildContext context, Widget child) => showModalBottomSheet<T>(
-      context: context,
-      isScrollControlled: true,
-      shape: _sheetShape,
-      builder: (sheet) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheet).bottom),
-        child: SafeArea(child: child),
-      ),
-    );
 
 Future<T?> _pick<T>(
   BuildContext context, {
@@ -155,15 +142,12 @@ Future<T?> _pick<T>(
   final text = Theme.of(context).textTheme;
   return showModalBottomSheet<T>(
     context: context,
-    shape: _sheetShape,
+    shape: appSheetShape,
     builder: (sheet) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: EdgeInsets.all(16.r),
-            child: Text(title, style: text.titleLarge),
-          ),
+          AppSheetHeader(title: title),
           if (items.isEmpty)
             Padding(
               padding: EdgeInsets.only(bottom: 24.h),
@@ -185,29 +169,6 @@ Future<T?> _pick<T>(
       ),
     ),
   );
-}
-
-class _SheetBody extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-
-  const _SheetBody({required this.title, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 16.h),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          14.height,
-          ...children,
-        ],
-      ),
-    );
-  }
 }
 
 /// Digits with one optional decimal point, so 29.5 stays 29.5.
@@ -245,7 +206,7 @@ class _CollectSheetState extends State<_CollectSheet> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final change = (_amount ?? 0) - widget.total;
-    return _SheetBody(
+    return AppSheetBody(
       title: 'sheet.collectTitle'.trParams({'amount': FormatHelper.money(widget.total)}),
       children: [
         Row(
@@ -262,7 +223,7 @@ class _CollectSheetState extends State<_CollectSheet> {
         ),
         if (_method == 'cash') ...[
           14.height,
-          AppTextField(
+          AppTextField(dense: true, 
             controller: _received,
             label: 'sheet.received'.tr,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -335,7 +296,7 @@ class _DiscountSheetState extends State<_DiscountSheet> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final problem = _problem;
-    return _SheetBody(
+    return AppSheetBody(
       title: 'action.discount'.tr,
       children: [
         Row(
@@ -354,7 +315,7 @@ class _DiscountSheetState extends State<_DiscountSheet> {
           ],
         ),
         14.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _value,
           label: 'sheet.discountValue'.tr,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -367,7 +328,7 @@ class _DiscountSheetState extends State<_DiscountSheet> {
           Text(problem, style: text.bodySmall?.copyWith(color: AppColors.danger)),
         ],
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _reason,
           label: 'sheet.reason'.tr,
           onChanged: (_) => setState(() {}),
@@ -411,10 +372,10 @@ class _TextSheetState extends State<_TextSheet> {
   @override
   Widget build(BuildContext context) {
     final valid = _input.text.trim().length >= 2;
-    return _SheetBody(
+    return AppSheetBody(
       title: widget.title,
       children: [
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _input,
           label: widget.hint,
           maxLines: 3,

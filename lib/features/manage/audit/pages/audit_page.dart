@@ -6,8 +6,10 @@ import 'package:iconsax/iconsax.dart';
 import '../../../../commons/models/audit_entry.dart';
 import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../commons/widgets/layout/branch_picker.dart';
+import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 import '../../../../core/helpers/format_helper.dart';
+import '../audit_format.dart';
 import '../../common/widgets/manage_cards.dart';
 import '../../common/widgets/manage_page.dart';
 import '../controllers/audit_controller.dart';
@@ -52,8 +54,7 @@ class _AuditCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final oldValue = entry.oldValue;
-    final newValue = entry.newValue;
+    final changes = AuditFormat.changes(entry);
     return RoundedContainer(
       padding: EdgeInsets.all(14.r),
       child: Column(
@@ -69,19 +70,51 @@ class _AuditCard extends StatelessWidget {
             ].where((part) => part.isNotEmpty).join(' · '),
             style: text.bodySmall,
           ),
-          if (oldValue != null || newValue != null) ...[
-            6.height,
-            Text(
-              [oldValue ?? '-', newValue ?? '-'].join(' ← '),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: text.bodySmall,
-            ),
+          if (changes.isNotEmpty) ...[
+            8.height,
+            for (final change in changes.take(4)) _ChangeLine(change: change),
           ],
           if (entry.reason != null) ...[
             6.height,
             Text('audit.reason'.trParams({'text': entry.reason!}), style: text.bodySmall),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ChangeLine extends StatelessWidget {
+  final AuditChange change;
+
+  const _ChangeLine({required this.change});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final from = change.from;
+    final to = change.to;
+    return Padding(
+      padding: EdgeInsets.only(top: 3.h),
+      child: Wrap(
+        spacing: 6.w,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          if (change.label != null) Text('${change.label}:', style: text.bodySmall),
+          if (from != null)
+            Text(
+              from,
+              style: text.bodySmall?.copyWith(
+                color: AppColors.ink500,
+                decoration: to == null ? null : TextDecoration.lineThrough,
+              ),
+            ),
+          if (from != null && to != null) Icon(
+              Directionality.of(context) == TextDirection.rtl ? Iconsax.arrow_left : Iconsax.arrow_right,
+              size: 13.r,
+              color: AppColors.ink500,
+            ),
+          if (to != null) Text(to, style: text.labelMedium?.copyWith(color: AppColors.ink900)),
         ],
       ),
     );

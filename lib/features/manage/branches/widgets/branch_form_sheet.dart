@@ -95,7 +95,7 @@ class _BranchFormSheetState extends State<BranchFormSheet> {
       child: Row(
         children: [
           SizedBox(width: 66.w, child: Text('day.$index'.tr, style: text.bodySmall)),
-          Switch(
+          Switch.adaptive(activeTrackColor: AppColors.primary, 
             value: !day.closed,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             onChanged: (open) => setState(() => day.closed = !open),
@@ -125,18 +125,18 @@ class _BranchFormSheetState extends State<BranchFormSheet> {
       title: 'branches.edit'.tr,
       subtitle: widget.branch.name.shown,
       children: [
-        AppTextField(controller: _nameAr, label: 'manage.nameAr'.tr, onChanged: _touch),
+        AppTextField(dense: true, controller: _nameAr, label: 'manage.nameAr'.tr, onChanged: _touch),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _nameEn,
           label: 'manage.nameEn'.tr,
           maxLength: 80,
           textDirection: TextDirection.ltr,
         ),
         12.height,
-        AppTextField(controller: _addressAr, label: 'branches.addressAr'.tr, maxLines: 2, onChanged: _touch),
+        AppTextField(dense: true, controller: _addressAr, label: 'branches.addressAr'.tr, maxLines: 2, onChanged: _touch),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _addressEn,
           label: 'branches.addressEn'.tr,
           maxLength: 160,
@@ -144,7 +144,7 @@ class _BranchFormSheetState extends State<BranchFormSheet> {
           textDirection: TextDirection.ltr,
         ),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _phone,
           label: 'orders.phone'.tr,
           keyboardType: TextInputType.phone,
@@ -152,7 +152,7 @@ class _BranchFormSheetState extends State<BranchFormSheet> {
           onChanged: _touch,
         ),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _capacity,
           label: 'branches.capacityLabel'.tr,
           error: _capacityError,
@@ -175,7 +175,7 @@ class _BranchFormSheetState extends State<BranchFormSheet> {
         FieldLabel('branches.hours'.tr),
         for (var i = 0; i < _days.length; i++) _dayRow(i),
         8.height,
-        SwitchListTile(
+        SwitchListTile.adaptive(activeTrackColor: AppColors.primary, 
           contentPadding: EdgeInsets.zero,
           title: Text('branches.activeSwitch'.tr, style: text.titleSmall),
           value: _active,
@@ -188,7 +188,7 @@ class _BranchFormSheetState extends State<BranchFormSheet> {
           ),
           8.height,
         ],
-        AppTextField(controller: _reason, label: 'sheet.reason'.tr, maxLines: 2, onChanged: _touch),
+        AppTextField(dense: true, controller: _reason, label: 'sheet.reason'.tr, maxLines: 2, onChanged: _touch),
         18.height,
         SubmitButton(
           title: 'common.save'.tr,

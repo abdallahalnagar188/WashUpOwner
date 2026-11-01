@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../core/constance/app_colors.dart';
+import 'pill_label_shader.dart';
 
 /// Scrollable tabs on a soft track, with one pill that slides to the selected
 /// tab. The selected tab scrolls to the middle when it was partly hidden.
@@ -26,50 +27,63 @@ class SlidingTabs<T> extends StatefulWidget {
   State<SlidingTabs<T>> createState() => _SlidingTabsState<T>();
 }
 
-class _SlidingTabsState<T> extends State<SlidingTabs<T>> {
+class _SlidingTabsState<T> extends State<SlidingTabs<T>> with SingleTickerProviderStateMixin {
   final Map<T, GlobalKey> _keys = {};
   final GlobalKey _stackKey = GlobalKey();
-  Rect? _pill;
+  final RectTween _pill = RectTween();
+  late final AnimationController _slide = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+  );
+  late final Animation<double> _progress = CurvedAnimation(parent: _slide, curve: Curves.easeOutCubic);
+  bool _scrollToSelected = false;
 
   GlobalKey _keyFor(T item) => _keys.putIfAbsent(item, GlobalKey.new);
 
   @override
-  void initState() {
-    super.initState();
-    _measureAfterLayout(scroll: false);
+  void didUpdateWidget(SlidingTabs<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selected != widget.selected) _scrollToSelected = true;
   }
 
   @override
-  void didUpdateWidget(SlidingTabs<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Counts change the labels' width, so the pill is measured on every update.
-    _measureAfterLayout(scroll: oldWidget.selected != widget.selected);
+  void dispose() {
+    _slide.dispose();
+    super.dispose();
   }
 
-  void _measureAfterLayout({required bool scroll}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final tabContext = _keyFor(widget.selected).currentContext;
-      final tab = tabContext?.findRenderObject() as RenderBox?;
-      final stack = _stackKey.currentContext?.findRenderObject() as RenderBox?;
-      if (tabContext == null || tab == null || stack == null) return;
-      final rect = tab.localToGlobal(Offset.zero, ancestor: stack) & tab.size;
-      if (rect != _pill) setState(() => _pill = rect);
-      if (scroll) {
-        Scrollable.ensureVisible(
-          tabContext,
-          alignment: 0.5,
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeOutCubic,
-        );
-      }
-    });
+  void _movePill(Rect rect) {
+    if (rect == _pill.end) return;
+    _pill
+      ..begin = _pill.evaluate(_progress) ?? rect
+      ..end = rect;
+    _slide.forward(from: 0);
+  }
+
+  /// Runs after every build, because any build can change a label's width and
+  /// with it where the tabs sit.
+  void _measureAfterLayout(Duration _) {
+    if (!mounted) return;
+    final tabContext = _keyFor(widget.selected).currentContext;
+    final tab = tabContext?.findRenderObject() as RenderBox?;
+    final stack = _stackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (tabContext == null || tab == null || stack == null) return;
+    _movePill(tab.localToGlobal(Offset.zero, ancestor: stack) & tab.size);
+    if (_scrollToSelected) {
+      _scrollToSelected = false;
+      Scrollable.ensureVisible(
+        tabContext,
+        alignment: 0.5,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.labelMedium ?? const TextStyle();
-    final pill = _pill;
+    WidgetsBinding.instance.addPostFrameCallback(_measureAfterLayout);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
@@ -80,51 +94,56 @@ class _SlidingTabsState<T> extends State<SlidingTabs<T>> {
           color: AppColors.primarySoft,
           borderRadius: BorderRadius.circular(99),
         ),
-        child: Stack(
-          key: _stackKey,
-          children: [
-            if (pill != null)
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                left: pill.left,
-                top: pill.top,
-                width: pill.width,
-                height: pill.height,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(99),
+        child: AnimatedBuilder(
+          animation: _progress,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final item in widget.items)
+                GestureDetector(
+                  key: _keyFor(item),
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    if (item == widget.selected) return;
+                    HapticFeedback.selectionClick();
+                    widget.onSelect(item);
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                    child: Text(widget.label(item), style: style.copyWith(fontWeight: FontWeight.w700)),
                   ),
                 ),
-              ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
+            ],
+          ),
+          builder: (context, labels) {
+            final pill = _pill.evaluate(_progress);
+            return Stack(
+              key: _stackKey,
               children: [
-                for (final item in widget.items)
-                  GestureDetector(
-                    key: _keyFor(item),
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      if (item == widget.selected) return;
-                      HapticFeedback.selectionClick();
-                      widget.onSelect(item);
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                      child: AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 200),
-                        style: style.copyWith(
-                          color: item == widget.selected ? Colors.white : AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        child: Text(widget.label(item)),
+                if (pill != null)
+                  Positioned.fromRect(
+                    rect: pill,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(99),
                       ),
                     ),
                   ),
+                ShaderMask(
+                  blendMode: BlendMode.srcIn,
+                  shaderCallback: (bounds) => pillLabelShader(
+                    bounds,
+                    left: pill?.left ?? 0,
+                    right: pill?.right ?? 0,
+                    inside: Colors.white,
+                    outside: AppColors.primary,
+                  ),
+                  child: labels,
+                ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

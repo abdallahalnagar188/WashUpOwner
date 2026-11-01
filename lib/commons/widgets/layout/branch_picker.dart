@@ -6,6 +6,7 @@ import 'package:iconsax/iconsax.dart';
 import '../../../core/constance/app_colors.dart';
 import '../../../core/extensions/sized_box_extension.dart';
 import '../../../core/services/session_service.dart';
+import '../sheets/app_sheet.dart';
 
 /// Frosted chip on the header showing the branch in view; opens a picker.
 class BranchPickerChip extends StatelessWidget {
@@ -17,6 +18,7 @@ class BranchPickerChip extends StatelessWidget {
     if (account == null) return;
     await showModalBottomSheet<void>(
       context: context,
+      shape: appSheetShape,
       builder: (context) {
         Widget option(String id, String label) => ListTile(
               title: Text(label, style: text.titleSmall),
@@ -32,10 +34,7 @@ class BranchPickerChip extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: EdgeInsets.all(16.r),
-                child: Text('home.chooseBranch'.tr, style: text.titleLarge),
-              ),
+              AppSheetHeader(title: 'home.chooseBranch'.tr),
               option(SessionService.allBranches, 'home.allBranches'.tr),
               for (final branch in account.branches) option(branch.id, branch.name.value),
             ],

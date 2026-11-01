@@ -38,7 +38,7 @@ class _ReviewReplySheetState extends State<ReviewReplySheet> {
       title: 'reviews.replyTo'.trParams({'name': widget.review.customerName}),
       subtitle: 'reviews.replyBody'.tr,
       children: [
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _input,
           maxLines: 4,
           maxLength: _max,

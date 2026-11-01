@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../commons/models/business_settings.dart';
 import '../../../../commons/widgets/common_widgets.dart';
+import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 import '../../common/widgets/manage_cards.dart';
 import '../../common/widgets/manage_sheets.dart';
@@ -170,7 +171,7 @@ class _ManagerEditsSectionState extends State<ManagerEditsSection> {
     return SectionCard(
       title: 'settings.permissions'.tr,
       children: [
-        SwitchListTile(
+        SwitchListTile.adaptive(activeTrackColor: AppColors.primary, 
           contentPadding: EdgeInsets.zero,
           title: Text('settings.managerEdits'.tr, style: Theme.of(context).textTheme.bodyMedium),
           value: _value,
@@ -232,7 +233,7 @@ class _PrefsSectionState extends State<PrefsSection> {
       title: 'settings.notifications'.tr,
       children: [
         for (final key in BusinessSettings.prefKeys)
-          SwitchListTile(
+          SwitchListTile.adaptive(activeTrackColor: AppColors.primary, 
             contentPadding: EdgeInsets.zero,
             dense: true,
             title: Text('settings.pref.$key'.tr, style: text.bodyMedium),

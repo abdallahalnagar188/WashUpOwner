@@ -152,23 +152,23 @@ class _OfferFormSheetState extends State<OfferFormSheet> {
     return SheetBody(
       title: widget.offer == null ? 'offers.add'.tr : 'offers.edit'.tr,
       children: [
-        AppTextField(controller: _titleAr, label: 'offers.titleAr'.tr, maxLength: 60, onChanged: _touch),
+        AppTextField(dense: true, controller: _titleAr, label: 'offers.titleAr'.tr, maxLength: 60, onChanged: _touch),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _titleEn,
           label: 'offers.titleEn'.tr,
           maxLength: 60,
           textDirection: TextDirection.ltr,
         ),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _descriptionAr,
           label: 'manage.descriptionAr'.tr,
           maxLength: 200,
           maxLines: 2,
         ),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _descriptionEn,
           label: 'manage.descriptionEn'.tr,
           maxLength: 200,
@@ -184,7 +184,7 @@ class _OfferFormSheetState extends State<OfferFormSheet> {
           onTap: (type) => setState(() => _discountType = type),
         ),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _value,
           label: 'sheet.discountValue'.tr,
           error: _valueError,

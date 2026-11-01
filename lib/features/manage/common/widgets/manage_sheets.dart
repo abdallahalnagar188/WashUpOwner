@@ -4,28 +4,12 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../commons/widgets/common_widgets.dart';
+import '../../../../commons/widgets/sheets/app_sheet.dart';
 import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 
-ShapeBorder get _sheetShape => RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(26.r)),
-    );
-
 /// A bottom sheet that rises above the keyboard and scrolls when it is long.
-Future<T?> showManageSheet<T>(BuildContext context, Widget child) => showModalBottomSheet<T>(
-      context: context,
-      isScrollControlled: true,
-      shape: _sheetShape,
-      builder: (sheet) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheet).bottom),
-        child: SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheet).height * 0.86),
-            child: child,
-          ),
-        ),
-      ),
-    );
+Future<T?> showManageSheet<T>(BuildContext context, Widget child) => showAppSheet<T>(context, child);
 
 class SheetBody extends StatelessWidget {
   final String title;
@@ -35,25 +19,7 @@ class SheetBody extends StatelessWidget {
   const SheetBody({super.key, required this.title, this.subtitle, required this.children});
 
   @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 16.h),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: text.titleLarge),
-          if (subtitle != null) ...[
-            4.height,
-            Text(subtitle!, style: text.bodySmall),
-          ],
-          14.height,
-          ...children,
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AppSheetBody(title: title, subtitle: subtitle, children: children);
 }
 
 /// A form label over its chips.
@@ -222,7 +188,7 @@ class _ReasonSheetState extends State<ReasonSheet> {
           ),
           12.height,
         ],
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _reason,
           label: 'sheet.reason'.tr,
           maxLines: 3,

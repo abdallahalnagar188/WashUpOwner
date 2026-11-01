@@ -131,7 +131,7 @@ class _ServiceRow extends StatelessWidget {
               ),
             ),
             8.width,
-            Switch(
+            Switch.adaptive(activeTrackColor: AppColors.primary, 
               value: service.active,
               onChanged: canEdit && !busy ? onToggle : null,
             ),

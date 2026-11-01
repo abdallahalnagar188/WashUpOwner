@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../commons/models/managed_branch.dart';
 import '../../../../commons/widgets/common_widgets.dart';
+import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 import '../../../../core/helpers/format_helper.dart';
 import '../../common/widgets/amount_input.dart';
@@ -64,7 +65,7 @@ class _BranchRulesSheetState extends State<BranchRulesSheet> {
       title: 'branches.editRules'.tr,
       subtitle: widget.branch.name.shown,
       children: [
-        SwitchListTile(
+        SwitchListTile.adaptive(activeTrackColor: AppColors.primary, 
           contentPadding: EdgeInsets.zero,
           title: Text('branches.autoConfirm'.tr, style: Theme.of(context).textTheme.titleSmall),
           value: _autoConfirm,
@@ -80,7 +81,7 @@ class _BranchRulesSheetState extends State<BranchRulesSheet> {
         ),
         14.height,
         for (final field in _fields) ...[
-          AppTextField(
+          AppTextField(dense: true, 
             controller: field.input,
             label: '${field.key.tr} (${FormatHelper.plain(field.min)}-${FormatHelper.plain(field.max)})',
             error: field.input.text.isEmpty || field.ok ? null : 'branches.outOfRange'.tr,
@@ -91,7 +92,7 @@ class _BranchRulesSheetState extends State<BranchRulesSheet> {
           ),
           12.height,
         ],
-        AppTextField(controller: _reason, label: 'sheet.reason'.tr, maxLines: 2, onChanged: (_) => setState(() {})),
+        AppTextField(dense: true, controller: _reason, label: 'sheet.reason'.tr, maxLines: 2, onChanged: (_) => setState(() {})),
         18.height,
         SubmitButton(
           title: 'common.save'.tr,

@@ -31,7 +31,9 @@ class _HostState extends State<_Host> {
   }
 }
 
-double pillLeft(WidgetTester tester) => tester.widget<AnimatedPositioned>(find.byType(AnimatedPositioned)).left!;
+double pillLeft(WidgetTester tester) => tester
+    .widget<Positioned>(find.descendant(of: find.byType(SlidingTabs<String>), matching: find.byType(Positioned)))
+    .left!;
 
 void main() {
   testWidgets('the pill sits under the selected tab and slides to the next', (tester) async {
@@ -47,5 +49,39 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(pillLeft(tester), greaterThan(0));
+  });
+  testWidgets('the pill stays under its tab when a label grows without a new widget', (tester) async {
+    var name = 'a';
+    await tester.pumpWidget(
+      ScreenUtilInit(
+        designSize: const Size(390, 844),
+        builder: (_, __) => MaterialApp(
+          home: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Scaffold(
+              body: SlidingTabs<String>(
+                items: const ['a', 'b'],
+                selected: 'a',
+                label: (item) => item == 'a' ? name : 'b',
+                onSelect: (_) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    name = 'a much longer label (4)';
+    tester.element(find.byType(SlidingTabs<String>)).markNeedsBuild();
+    await tester.pumpAndSettle();
+
+    final tab = tester.getRect(
+      find.ancestor(of: find.text(name), matching: find.byType(GestureDetector)).first,
+    );
+    final pill = tester.getRect(
+      find.descendant(of: find.byType(SlidingTabs<String>), matching: find.byType(Positioned)),
+    );
+    expect(pill, tab);
   });
 }

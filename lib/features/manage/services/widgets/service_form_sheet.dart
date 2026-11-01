@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../commons/models/managed_service.dart';
 import '../../../../commons/models/owner_account.dart';
 import '../../../../commons/widgets/common_widgets.dart';
+import '../../../../core/constance/app_colors.dart';
 import '../../../../core/data/vendor_manage_api.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 import '../../../../core/helpers/format_helper.dart';
@@ -137,9 +138,9 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
           onTap: (category) => setState(() => _category = category),
         ),
         14.height,
-        AppTextField(controller: _nameAr, label: 'manage.nameAr'.tr, maxLength: 60, onChanged: _touch),
+        AppTextField(dense: true, controller: _nameAr, label: 'manage.nameAr'.tr, maxLength: 60, onChanged: _touch),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _nameEn,
           label: 'manage.nameEn'.tr,
           maxLength: 60,
@@ -147,14 +148,14 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
           onChanged: _touch,
         ),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _descriptionAr,
           label: 'manage.descriptionAr'.tr,
           maxLength: 200,
           maxLines: 2,
         ),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _descriptionEn,
           label: 'manage.descriptionEn'.tr,
           maxLength: 200,
@@ -162,7 +163,7 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
           textDirection: TextDirection.ltr,
         ),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _price,
           label: 'services.price'.tr,
           error: _priceError,
@@ -172,7 +173,7 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
           onChanged: _touch,
         ),
         12.height,
-        AppTextField(
+        AppTextField(dense: true, 
           controller: _duration,
           label: 'services.duration'.tr,
           error: _durationError,
@@ -183,10 +184,10 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
         ),
         if (_priceChanged) ...[
           12.height,
-          AppTextField(controller: _reason, label: 'services.priceReason'.tr, maxLength: 200),
+          AppTextField(dense: true, controller: _reason, label: 'services.priceReason'.tr, maxLength: 200),
         ],
         6.height,
-        SwitchListTile(
+        SwitchListTile.adaptive(activeTrackColor: AppColors.primary, 
           contentPadding: EdgeInsets.zero,
           title: Text('services.active'.tr, style: Theme.of(context).textTheme.titleSmall),
           value: _active,

@@ -25,9 +25,9 @@ Color segmentColor(String segment) => switch (segment) {
 class CustomersPage extends GetView<CustomersController> {
   const CustomersPage({super.key});
 
-  String _label(String segment) {
+  String _label(String segment, Map<String, int> counts) {
     final name = 'customers.segment.$segment'.tr;
-    final count = controller.counts[segment];
+    final count = counts[segment];
     return count == null ? name : '$name ($count)';
   }
 
@@ -39,14 +39,15 @@ class CustomersPage extends GetView<CustomersController> {
       headerChild: branches.length > 1 ? const BranchPickerChip() : null,
       body: Column(
         children: [
-          Obx(
-            () => ChipBar<String>(
+          Obx(() {
+            final counts = controller.counts;
+            return ChipBar<String>(
               values: CustomersController.segments,
               selected: controller.segment.value,
-              label: _label,
+              label: (segment) => _label(segment, counts),
               onSelect: controller.selectSegment,
-            ),
-          ),
+            );
+          }),
           Expanded(child: Obx(_list)),
         ],
       ),

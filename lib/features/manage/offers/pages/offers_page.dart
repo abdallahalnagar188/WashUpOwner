@@ -168,7 +168,7 @@ class _OfferCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 if (offer.canToggle)
-                  Switch(value: offer.enabled, onChanged: busy ? null : onToggle),
+                  Switch.adaptive(activeTrackColor: AppColors.primary, value: offer.enabled, onChanged: busy ? null : onToggle),
               ],
             ),
         ],

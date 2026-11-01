@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../commons/models/owner_account.dart';
 import '../../../../commons/models/staff_member.dart';
 import '../../../../commons/widgets/common_widgets.dart';
+import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 import '../../../../core/helpers/format_helper.dart';
 import '../../common/widgets/amount_input.dart';
@@ -132,9 +133,9 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
       title: _creating ? 'staff.add'.tr : widget.member!.name,
       children: [
         if (_creating) ...[
-          AppTextField(controller: _name, label: 'staff.name'.tr, onChanged: _touch),
+          AppTextField(dense: true, controller: _name, label: 'staff.name'.tr, onChanged: _touch),
           12.height,
-          AppTextField(
+          AppTextField(dense: true, 
             controller: _phone,
             label: 'orders.phone'.tr,
             hint: '01xxxxxxxxx',
@@ -164,7 +165,7 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
         ],
         IgnorePointer(
           ignoring: _locked,
-          child: AppTextField(
+          child: AppTextField(dense: true, 
             controller: _discount,
             label: 'staff.discountLimit'.tr,
             error: _discountError,
@@ -177,7 +178,7 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
         14.height,
         Text('staff.permissions'.tr, style: text.titleSmall),
         for (final key in StaffMember.permissionKeys)
-          SwitchListTile(
+          SwitchListTile.adaptive(activeTrackColor: AppColors.primary, 
             contentPadding: EdgeInsets.zero,
             dense: true,
             title: Text('staff.permission.$key'.tr, style: text.bodyMedium),
@@ -186,7 +187,7 @@ class _StaffFormSheetState extends State<StaffFormSheet> {
           ),
         if (!_creating) ...[
           10.height,
-          AppTextField(controller: _reason, label: 'sheet.reason'.tr, onChanged: _touch),
+          AppTextField(dense: true, controller: _reason, label: 'sheet.reason'.tr, onChanged: _touch),
         ],
         18.height,
         SubmitButton(

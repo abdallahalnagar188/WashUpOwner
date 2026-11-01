@@ -5,6 +5,7 @@ import 'package:iconsax/iconsax.dart';
 import '../../../../commons/models/vendor_report.dart';
 import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../commons/widgets/layout/branch_picker.dart';
+import '../../../../commons/widgets/tabs/sliding_segment.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 import '../../common/widgets/manage_cards.dart';
 import '../../common/widgets/manage_page.dart';
@@ -21,7 +22,23 @@ class ReportsPage extends GetView<ReportsController> {
     final branches = controller.session.account.value?.branches ?? const [];
     return ManagePage(
       title: 'more.reports'.tr,
-      headerChild: branches.length > 1 ? const BranchPickerChip() : null,
+      headerChild: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (branches.length > 1) ...[
+            const BranchPickerChip(),
+            10.height,
+          ],
+          Obx(
+            () => SlidingSegment<String>(
+              items: ReportsController.ranges,
+              selected: controller.range.value,
+              label: (range) => 'reports.range.$range'.tr,
+              onSelect: controller.selectRange,
+            ),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Obx(
@@ -30,14 +47,6 @@ class ReportsPage extends GetView<ReportsController> {
               selected: controller.type.value,
               label: (type) => 'reports.type.$type'.tr,
               onSelect: controller.selectType,
-            ),
-          ),
-          Obx(
-            () => ChipBar<String>(
-              values: ReportsController.ranges,
-              selected: controller.range.value,
-              label: (range) => 'reports.range.$range'.tr,
-              onSelect: controller.selectRange,
             ),
           ),
           Expanded(

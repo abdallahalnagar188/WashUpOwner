@@ -20,9 +20,9 @@ import '../widgets/shift_status.dart';
 class ShiftsPage extends GetView<ShiftsController> {
   const ShiftsPage({super.key});
 
-  String _label(String filter) {
+  String _label(String filter, Map<String, int> counts) {
     final name = 'shifts.filter.$filter'.tr;
-    final count = controller.counts[filter];
+    final count = counts[filter];
     return count == null ? name : '$name ($count)';
   }
 
@@ -38,14 +38,15 @@ class ShiftsPage extends GetView<ShiftsController> {
       headerChild: branches.length > 1 ? const BranchPickerChip() : null,
       body: Column(
         children: [
-          Obx(
-            () => ChipBar<String>(
+          Obx(() {
+            final counts = controller.counts;
+            return ChipBar<String>(
               values: ShiftsController.filters,
               selected: controller.filter.value,
-              label: _label,
+              label: (filter) => _label(filter, counts),
               onSelect: controller.selectFilter,
-            ),
-          ),
+            );
+          }),
           Expanded(child: Obx(_list)),
         ],
       ),

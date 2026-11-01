@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../core/constance/app_colors.dart';
+import 'pill_label_shader.dart';
 
 /// Equal segments for use on the blue header, with a white pill that slides.
 class SlidingSegment<T> extends StatelessWidget {
@@ -22,7 +23,8 @@ class SlidingSegment<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.labelLarge ?? const TextStyle();
-    final index = items.indexOf(selected);
+    final index = items.indexOf(selected).toDouble();
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
     return Container(
       height: 38.h,
       padding: EdgeInsets.all(3.r),
@@ -30,51 +32,61 @@ class SlidingSegment<T> extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(99),
       ),
-      child: Stack(
-        children: [
-          AnimatedAlign(
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOutCubic,
-            alignment: AlignmentDirectional(
-              items.length < 2 ? 0 : -1 + index * (2 / (items.length - 1)),
-              0,
-            ),
-            child: FractionallySizedBox(
-              widthFactor: 1 / items.length,
-              heightFactor: 1,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(99),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: index, end: index),
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        child: Row(
+          children: [
+            for (final item in items)
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    if (item == selected) return;
+                    HapticFeedback.selectionClick();
+                    onSelect(item);
+                  },
+                  child: Center(child: Text(label(item), style: style)),
                 ),
               ),
-            ),
-          ),
-          Row(
+          ],
+        ),
+        builder: (context, position, labels) {
+          final share = 1 / items.length;
+          final start = position * share;
+          return Stack(
             children: [
-              for (final item in items)
-                Expanded(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      if (item == selected) return;
-                      HapticFeedback.selectionClick();
-                      onSelect(item);
-                    },
-                    child: Center(
-                      child: AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 200),
-                        style: style.copyWith(
-                          color: item == selected ? AppColors.brand : Colors.white,
-                        ),
-                        child: Text(label(item)),
-                      ),
+              Align(
+                alignment: AlignmentDirectional(
+                  items.length < 2 ? 0 : -1 + position * (2 / (items.length - 1)),
+                  0,
+                ),
+                child: FractionallySizedBox(
+                  widthFactor: share,
+                  heightFactor: 1,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(99),
                     ),
                   ),
                 ),
+              ),
+              ShaderMask(
+                blendMode: BlendMode.srcIn,
+                shaderCallback: (bounds) => pillLabelShader(
+                  bounds,
+                  left: bounds.width * (isRtl ? 1 - start - share : start),
+                  right: bounds.width * (isRtl ? 1 - start : start + share),
+                  inside: AppColors.brand,
+                  outside: Colors.white,
+                ),
+                child: labels,
+              ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
