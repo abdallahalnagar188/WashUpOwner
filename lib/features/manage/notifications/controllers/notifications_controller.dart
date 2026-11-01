@@ -40,7 +40,7 @@ class NotificationsController extends PagedController<AppNotification> {
       final index = items.indexWhere((n) => n.id == item.id);
       if (index >= 0) items[index] = item.markedRead();
       meta['unread'] = max(0, unread - 1);
-      api.markNotificationRead(item.id).catchError((_) {
+      api.markNotificationRead(item.id).then((_) => session.notifyOrderChanged()).catchError((_) {
         // Still unread on the server; the next load shows that.
       });
     }
@@ -53,6 +53,7 @@ class NotificationsController extends PagedController<AppNotification> {
     markingAll.value = true;
     try {
       await api.markAllNotificationsRead();
+      session.notifyOrderChanged();
       await load(silent: true);
     } catch (e) {
       Utils.getSnakBar(message: e.toString(), type: TosterTypes.failed);

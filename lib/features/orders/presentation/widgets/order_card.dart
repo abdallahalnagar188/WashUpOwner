@@ -12,12 +12,19 @@ import '../../../../core/extensions/sized_box_extension.dart';
 import '../../../../core/helpers/format_helper.dart';
 import '../../../../core/routing/app_routes.dart';
 
-/// One order in a list. The whole card opens its details, where every action
-/// lives.
+/// One order in a list. Tapping the card opens its details. When [onNextStep]
+/// is given, the order's next step sits on the card as a button.
 class OrderCard extends StatelessWidget {
   final OrderSummary order;
+  final VoidCallback? onNextStep;
+  final bool busy;
 
-  const OrderCard({super.key, required this.order});
+  const OrderCard({super.key, required this.order, this.onNextStep, this.busy = false});
+
+  bool get _late =>
+      order.overdueMin > 0 &&
+      const [OrderStatus.pending, OrderStatus.confirmed, OrderStatus.waiting, OrderStatus.inService]
+          .contains(order.status);
 
   @override
   Widget build(BuildContext context) {
@@ -89,13 +96,27 @@ class OrderCard extends StatelessWidget {
                     style: text.labelSmall,
                   ),
                 ),
-                if (next != null)
+                if (_late)
+                  Text(
+                    'orders.late'.trParams({'min': '${order.overdueMin}'}),
+                    style: text.labelSmall?.copyWith(color: AppColors.danger),
+                  )
+                else if (next != null && onNextStep == null)
                   Text(
                     'action.${next.key}'.tr,
                     style: text.labelMedium?.copyWith(color: AppColors.primary),
                   ),
               ],
             ),
+            if (next != null && onNextStep != null) ...[
+              12.height,
+              AppButton(
+                title: 'action.${next.key}'.tr,
+                small: true,
+                loading: busy,
+                onTap: onNextStep,
+              ),
+            ],
           ],
         ),
       ),

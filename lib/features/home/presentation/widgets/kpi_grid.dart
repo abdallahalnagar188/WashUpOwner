@@ -6,30 +6,33 @@ import 'package:iconsax/iconsax.dart';
 import '../../../../commons/models/dashboard_summary.dart';
 import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../commons/widgets/effects/animated_number.dart';
+import '../../../../commons/widgets/effects/pressable.dart';
 import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 import '../../../../core/helpers/format_helper.dart';
+import '../../../main/presentation/controllers/main_controller.dart';
 
 class KpiGrid extends StatelessWidget {
   final DashboardSummary summary;
 
   const KpiGrid({super.key, required this.summary});
 
-  // Revenue sits on the header, so the grid starts with orders.
-  static final List<(String, IconData, Color Function())> _tiles = [
-    ('totalOrders', Iconsax.receipt_2, () => AppColors.primary),
-    ('completed', Iconsax.tick_circle, () => AppColors.success),
-    ('pendingPayments', Iconsax.wallet_money, () => AppColors.warning),
-    ('confirmedBookings', Iconsax.calendar_tick, () => AppColors.statusConfirmed),
-    ('walkIns', Iconsax.car, () => AppColors.statusInService),
-    ('cancelled', Iconsax.close_circle, () => AppColors.danger),
+  // Revenue sits on the header. Each tile opens the list behind its number:
+  // view, then tab. What needs action comes first.
+  static final List<(String, IconData, Color Function(), String, String)> _tiles = [
+    ('pendingPayments', Iconsax.wallet_money, () => AppColors.warning, 'orders', 'payment_pending'),
+    ('confirmedBookings', Iconsax.calendar_tick, () => AppColors.statusConfirmed, 'bookings', 'upcoming'),
+    ('totalOrders', Iconsax.receipt_2, () => AppColors.primary, 'orders', 'active'),
+    ('completed', Iconsax.tick_circle, () => AppColors.success, 'orders', 'paid'),
+    ('walkIns', Iconsax.car, () => AppColors.statusInService, 'orders', 'active'),
+    ('cancelled', Iconsax.close_circle, () => AppColors.danger, 'bookings', 'cancelled'),
   ];
 
   @override
   Widget build(BuildContext context) {
     final tiles = [
       for (final tile in _tiles)
-        if (summary.kpi(tile.$1) != null) (summary.kpi(tile.$1)!, tile.$2, tile.$3()),
+        if (summary.kpi(tile.$1) != null) (summary.kpi(tile.$1)!, tile.$2, tile.$3(), tile.$4, tile.$5),
     ];
     return GridView.builder(
       shrinkWrap: true,
@@ -40,13 +43,16 @@ class KpiGrid extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 12.w,
         mainAxisSpacing: 12.h,
-        mainAxisExtent: 82.h,
+        mainAxisExtent: 70.h,
       ),
       itemBuilder: (_, index) {
-        final (kpi, icon, color) = tiles[index];
+        final (kpi, icon, color, view, tab) = tiles[index];
         return FadeSlideIn(
           delay: Duration(milliseconds: 50 * index),
-          child: _KpiTile(kpi: kpi, icon: icon, color: color),
+          child: Pressable(
+            onTap: () => Get.find<MainController>().openOrders(view: view, tab: tab),
+            child: _KpiTile(kpi: kpi, icon: icon, color: color),
+          ),
         );
       },
     );
@@ -64,12 +70,12 @@ class _KpiTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return RoundedContainer(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
       child: Row(
         children: [
           Container(
-            width: 40.r,
-            height: 40.r,
+            width: 38.r,
+            height: 38.r,
             decoration: BoxDecoration(
               color: AppColors.tint(color),
               borderRadius: BorderRadius.circular(13.r),

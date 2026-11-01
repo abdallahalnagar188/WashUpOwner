@@ -108,6 +108,23 @@ void main() {
     expect(server.requests.single.query['serviceIds'], 's1');
   });
 
+  test('search reads its results', () async {
+    final server = FakeServer(
+      (_) => FakeReply.ok({
+        'query': 'ab',
+        'results': [
+          {'group': 'customers', 'href': '/customers/cu_1', 'id': 'cu_1', 'subtitle': '0100', 'title': 'Name'},
+        ],
+      }),
+    );
+    final api = VendorApi(fakeClient(server, MemoryTokens()), MemoryTokens());
+
+    final results = await api.search('ab');
+
+    expect(results.single.href, '/customers/cu_1');
+    expect(server.requests.single.query['q'], 'ab');
+  });
+
   test('order actions post the action key with its fields', () async {
     final server = FakeServer((_) => FakeReply.ok(null));
     final api = VendorApi(fakeClient(server, MemoryTokens()), MemoryTokens());

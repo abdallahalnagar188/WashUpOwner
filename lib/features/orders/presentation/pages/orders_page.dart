@@ -5,8 +5,10 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../commons/widgets/layout/brand_header.dart';
-import '../../../../core/constance/app_colors.dart';
+import '../../../../commons/widgets/tabs/sliding_segment.dart';
+import '../../../../commons/widgets/tabs/sliding_tabs.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../controllers/orders_controller.dart';
 import '../widgets/order_card.dart';
 
@@ -19,31 +21,41 @@ class OrdersPage extends GetView<OrdersController> {
       children: [
         BrandHeader(
           title: 'orders.title'.tr,
+          trailing: HeaderButton(
+            icon: Iconsax.search_normal_1,
+            onTap: () => Get.toNamed(Routes.searchRoute),
+          ),
           child: Obx(
-            () => _ViewSwitch(selected: controller.view.value, onSelect: controller.selectView),
+            () => SlidingSegment<String>(
+              items: OrdersController.tabs.keys.toList(),
+              selected: controller.view.value,
+              label: (view) => 'orders.view.$view'.tr,
+              onSelect: controller.selectView,
+            ),
           ),
         ),
         12.height,
         Obx(
-          () => SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 20.w),
-            child: Row(
-              children: [
-                for (final tab in OrdersController.tabs[controller.view.value]!) ...[
-                  AppChip(
-                    label: _tabLabel(tab, controller.counts[tab]),
-                    selected: controller.tab.value == tab,
-                    onTap: () => controller.selectTab(tab),
-                  ),
-                  8.width,
-                ],
-              ],
-            ),
+          () => SlidingTabs<String>(
+            // A new key per view, so the pill does not cross between two tab sets.
+            key: ValueKey(controller.view.value),
+            items: OrdersController.tabs[controller.view.value]!,
+            selected: controller.tab.value,
+            label: (tab) => _tabLabel(tab, controller.counts[tab]),
+            onSelect: controller.selectTab,
           ),
         ),
         10.height,
-        Expanded(child: Obx(_list)),
+        Expanded(
+          child: Obx(
+            () => AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              child: KeyedSubtree(key: ValueKey(controller.listKey), child: _list()),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -61,6 +73,7 @@ class OrdersPage extends GetView<OrdersController> {
       onRefresh: controller.load,
       child: orders.isEmpty
           ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 SizedBox(
                   height: 260.h,
@@ -77,59 +90,9 @@ class OrdersPage extends GetView<OrdersController> {
                 physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                 padding: EdgeInsets.fromLTRB(20.w, 2.h, 20.w, 120.h),
                 itemCount: orders.length,
-                itemBuilder: (_, index) => FadeSlideIn(
-                  key: ValueKey(orders[index].id),
-                  delay: Duration(milliseconds: 40 * index.clamp(0, 6)),
-                  child: OrderCard(order: orders[index]),
-                ),
+                itemBuilder: (_, index) => OrderCard(key: ValueKey(orders[index].id), order: orders[index]),
               ),
             ),
-    );
-  }
-}
-
-class _ViewSwitch extends StatelessWidget {
-  final String selected;
-  final ValueChanged<String> onSelect;
-
-  const _ViewSwitch({required this.selected, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final views = OrdersController.tabs.keys.toList();
-    return Container(
-      height: 40.h,
-      padding: EdgeInsets.all(3.r),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Row(
-        children: [
-          for (final view in views)
-            Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => onSelect(view),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: view == selected ? Colors.white : Colors.transparent,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Text(
-                    'orders.view.$view'.tr,
-                    style: text.labelLarge?.copyWith(
-                      color: view == selected ? AppColors.brand : Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }

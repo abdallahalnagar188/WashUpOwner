@@ -4,6 +4,7 @@ import '../../commons/models/dashboard_summary.dart';
 import '../../commons/models/live_board.dart';
 import '../../commons/models/order.dart';
 import '../../commons/models/owner_account.dart';
+import '../../commons/models/search_result.dart';
 import '../../commons/models/service_item.dart';
 import '../enums/enums.dart';
 import '../network/api_client.dart';
@@ -148,6 +149,14 @@ class VendorApi {
 
   Future<void> unregisterPush({required String token}) =>
       _client.post('/vendor/push/unregister', body: {'token': token});
+
+  /// Finds orders and customers by plate, phone, name or order number.
+  Future<List<SearchResult>> search(String query) async {
+    final data = await _client.get('/vendor/search', query: {'q': query}) as Map<String, dynamic>;
+    return (data['results'] as List? ?? const [])
+        .map((result) => SearchResult.fromJson(result as Map<String, dynamic>))
+        .toList();
+  }
 
   Future<int> unreadNotifications() async {
     final reply = await _client.getRaw('/vendor/notifications', query: {'page': 1});

@@ -11,6 +11,8 @@ import '../widgets/owner_bottom_nav.dart';
 class MainPage extends StatelessWidget {
   const MainPage({super.key});
 
+  static const List<Widget> _tabs = [HomePage(), LivePage(), OrdersPage(), MorePage()];
+
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<MainController>();
@@ -19,7 +21,10 @@ class MainPage extends StatelessWidget {
       body: Obx(
         () => IndexedStack(
           index: controller.selectedIndex.value,
-          children: const [HomePage(), LivePage(), OrdersPage(), MorePage()],
+          children: [
+            for (var i = 0; i < _tabs.length; i++)
+              controller.openedTabs.contains(i) ? _tabs[i] : const SizedBox.shrink(),
+          ],
         ),
       ),
       bottomNavigationBar: const OwnerBottomNav(),

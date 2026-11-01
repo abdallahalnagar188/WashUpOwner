@@ -47,7 +47,11 @@ final Map<String, dynamic> _row = {
   'nextAction': 'start',
 };
 
-FakeServer _server({required Map<String, bool> permissions, required List<Map<String, dynamic>> actions}) {
+FakeServer _server({
+  required Map<String, bool> permissions,
+  required List<Map<String, dynamic>> actions,
+  String nextAction = 'start',
+}) {
   return FakeServer((request) {
     final path = request.path;
     if (path == '/vendor/auth/login') {
@@ -59,6 +63,7 @@ FakeServer _server({required Map<String, bool> permissions, required List<Map<St
         'kpis': [
           {'key': 'revenue', 'value': 356, 'delta': 12},
           {'key': 'totalOrders', 'value': 4, 'delta': null},
+          {'key': 'pendingPayments', 'value': 1, 'delta': null},
         ],
         'liveBranches': [],
         'carsInside': [_row],
@@ -72,7 +77,9 @@ FakeServer _server({required Map<String, bool> permissions, required List<Map<St
         'generatedAt': '2026-11-01T10:40:01.781Z',
         'columns': {
           'upcoming': [],
-          'waiting': [_row],
+          'waiting': [
+            {..._row, 'nextAction': nextAction},
+          ],
           'in_service': [],
           'payment_pending': [],
           'done': [],
@@ -175,6 +182,37 @@ void main() {
     expect(actions, [
       {'action': 'start'},
     ]);
+
+    await _finish(tester);
+  });
+
+  testWidgets('the live card runs a step that needs no answer', (tester) async {
+    final actions = <Map<String, dynamic>>[];
+    final server = _server(permissions: {'runService': true}, actions: actions, nextAction: 'check_in');
+    await _signIn(tester, server);
+
+    await tester.tap(find.text('التشغيل'));
+    await _settle(tester);
+    await tester.tap(find.text('تسجيل الوصول'));
+    await _settle(tester);
+
+    expect(actions, [
+      {'action': 'check_in'},
+    ]);
+
+    await _finish(tester);
+  });
+
+  testWidgets('a home number opens the list behind it', (tester) async {
+    final server = _server(permissions: {}, actions: []);
+    await _signIn(tester, server);
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('بانتظار الدفع'));
+    await _settle(tester);
+
+    final request = server.requests.lastWhere((r) => r.path == '/vendor/orders');
+    expect(request.query['tab'], 'payment_pending');
 
     await _finish(tester);
   });

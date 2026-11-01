@@ -5,6 +5,7 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../commons/widgets/layout/brand_header.dart';
+import '../../../../commons/widgets/tabs/sliding_tabs.dart';
 
 class ManageBackButton extends StatelessWidget {
   const ManageBackButton({super.key});
@@ -190,21 +191,9 @@ class ChipBar<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-      child: Row(
-        children: [
-          for (var i = 0; i < values.length; i++) ...[
-            if (i > 0) SizedBox(width: 8.w),
-            AppChip(
-              label: label(values[i]),
-              selected: values[i] == selected,
-              onTap: () => onSelect(values[i]),
-            ),
-          ],
-        ],
-      ),
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 10.h),
+      child: SlidingTabs<T>(items: values, selected: selected, label: label, onSelect: onSelect),
     );
   }
 }

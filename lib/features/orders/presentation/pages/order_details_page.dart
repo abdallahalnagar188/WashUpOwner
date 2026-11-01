@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../commons/models/order.dart';
 import '../../../../commons/widgets/common_widgets.dart';
+import '../../../../commons/widgets/effects/pressable.dart';
 import '../../../../commons/widgets/layout/brand_header.dart';
 import '../../../../core/constance/app_colors.dart';
 import '../../../../core/enums/enums.dart';
@@ -133,6 +135,41 @@ class _Row extends StatelessWidget {
   }
 }
 
+class _PhoneRow extends StatelessWidget {
+  final String phone;
+
+  const _PhoneRow({required this.phone});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Pressable(
+      onTap: () => launchUrl(Uri(scheme: 'tel', path: phone.replaceAll(' ', ''))),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 4.h),
+        child: Row(
+          children: [
+            Text('orders.phone'.tr, style: text.bodySmall),
+            const Spacer(),
+            Text(
+              phone,
+              textDirection: TextDirection.ltr,
+              style: text.bodyMedium?.copyWith(color: AppColors.primary),
+            ),
+            8.width,
+            Icon(
+              Iconsax.call,
+              semanticLabel: 'orders.call'.tr,
+              size: 17.r,
+              color: AppColors.primary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _InfoCard extends StatelessWidget {
   final OrderDetails order;
 
@@ -145,7 +182,7 @@ class _InfoCard extends StatelessWidget {
       child: Column(
         children: [
           if (order.customerName != null) _Row('orders.customer'.tr, order.customerName!),
-          if (order.customerPhone != null) _Row('orders.phone'.tr, order.customerPhone!),
+          if (order.customerPhone != null) _PhoneRow(phone: order.customerPhone!),
           if (order.vehicleLabel != null) _Row('orders.vehicle'.tr, order.vehicleLabel!),
           _Row('orders.time'.tr, FormatHelper.dayTime(order.scheduledAt)),
           _Row('orders.source'.tr, 'source.${order.source.key}'.tr),

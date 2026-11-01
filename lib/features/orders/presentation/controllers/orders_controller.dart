@@ -22,16 +22,30 @@ class OrdersController extends GetxController {
   final loadingMore = false.obs;
   final error = RxnString();
 
+  // Last list of each tab, so going back to a tab is instant while it refreshes.
+  final Map<String, List<OrderSummary>> _cache = {};
+
   int _page = 1;
   bool _hasNext = false;
   int _requestId = 0;
+
+  String get _cacheKey => '${_session.branchId.value}/${view.value}/${tab.value}';
+
+  /// Changes when the list on screen changes, for its transition.
+  String get listKey => '${view.value}/${tab.value}';
 
   @override
   void onInit() {
     super.onInit();
     load();
-    ever(_session.branchId, (_) => load());
-    ever(_session.orderChanges, (_) => load(silent: true));
+    ever(_session.branchId, (_) {
+      _cache.clear();
+      load();
+    });
+    ever(_session.orderChanges, (_) {
+      _cache.clear();
+      load(silent: true);
+    });
     ever(Get.find<MainController>().selectedIndex, (index) {
       if (index == MainController.ordersTab) load(silent: true);
     });
@@ -41,17 +55,35 @@ class OrdersController extends GetxController {
     if (view.value == value) return;
     view.value = value;
     tab.value = tabs[value]!.first;
-    load();
+    _showTab();
   }
 
   void selectTab(String value) {
     if (tab.value == value) return;
     tab.value = value;
-    load();
+    _showTab();
+  }
+
+  /// Jumps to a tab from elsewhere, like a number on Home.
+  void open({required String view, required String tab}) {
+    this.view.value = view;
+    this.tab.value = tab;
+    _showTab();
+  }
+
+  void _showTab() {
+    final cached = _cache[_cacheKey];
+    if (cached == null) {
+      load();
+    } else {
+      orders.assignAll(cached);
+      load(silent: true);
+    }
   }
 
   Future<void> load({bool silent = false}) async {
     final id = ++_requestId;
+    final key = _cacheKey;
     error.value = null;
     if (!silent) {
       loading.value = true;
@@ -67,6 +99,7 @@ class OrdersController extends GetxController {
       _page = 1;
       _hasNext = page.hasNext;
       orders.assignAll(page.items);
+      _cache[key] = page.items;
       counts.assignAll({
         for (final entry in (page.meta['counts'] as Map? ?? const {}).entries)
           entry.key.toString(): (entry.value as num).toInt(),

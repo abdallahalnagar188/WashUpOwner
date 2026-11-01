@@ -19,6 +19,9 @@ class HomeController extends GetxController {
   final unread = 0.obs;
   final error = RxnString();
 
+  /// The old numbers stay on screen, dimmed, while a new period loads.
+  final refreshing = false.obs;
+
   Timer? _poll;
 
   // Only the newest request may fill the screen.
@@ -60,11 +63,13 @@ class HomeController extends GetxController {
       unread.value = await _api.unreadNotifications();
     } catch (e) {
       if (id == _requestId) error.value = e.toString();
+    } finally {
+      if (id == _requestId) refreshing.value = false;
     }
   }
 
   void _reload() {
-    summary.value = null;
+    refreshing.value = true;
     load();
   }
 
