@@ -89,6 +89,25 @@ void main() {
     expect(server.requests.single.body, {'phone': '01000000000', 'password': 'x'});
   });
 
+  test('availability keeps only slots that can be booked', () async {
+    Map<String, dynamic> slot(int hour, {bool past = false, bool blocked = false, int free = 2}) => {
+          'start': '2026-11-02T${hour.toString().padLeft(2, '0')}:00:00.000Z',
+          'capacity': 4,
+          'free': free,
+          'past': past,
+          'blocked': blocked,
+        };
+    final server = FakeServer(
+      (_) => FakeReply.ok([slot(8, past: true), slot(9, blocked: true), slot(10, free: 0), slot(11)]),
+    );
+    final api = VendorApi(fakeClient(server, MemoryTokens()), MemoryTokens());
+
+    final slots = await api.availability(branchId: 'br_1', date: '2026-11-02', serviceIds: ['s1']);
+
+    expect(slots, [DateTime.utc(2026, 11, 2, 11)]);
+    expect(server.requests.single.query['serviceIds'], 's1');
+  });
+
   test('order actions post the action key with its fields', () async {
     final server = FakeServer((_) => FakeReply.ok(null));
     final api = VendorApi(fakeClient(server, MemoryTokens()), MemoryTokens());

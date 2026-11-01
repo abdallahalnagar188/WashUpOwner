@@ -93,7 +93,7 @@ class VendorApi {
     return data['total'] as num?;
   }
 
-  /// Slot start times for a phone booking.
+  /// Start times a phone booking can use.
   Future<List<DateTime>> availability({
     required String branchId,
     required String date,
@@ -103,9 +103,11 @@ class VendorApi {
       '/vendor/availability',
       query: {'branchId': branchId, 'date': date, 'serviceIds': serviceIds.join(',')},
     );
-    final slots = data is Map ? data['slots'] as List? ?? const [] : data as List;
-    return slots
-        .map((slot) => DateTime.parse((slot is Map ? slot['start'] : slot) as String))
+    // The reply lists every slot of the day, so keep the ones that can be booked.
+    return (data as List)
+        .cast<Map<String, dynamic>>()
+        .where((slot) => slot['past'] != true && slot['blocked'] != true && (slot['free'] as num? ?? 0) > 0)
+        .map((slot) => DateTime.parse(slot['start'] as String))
         .toList();
   }
 
