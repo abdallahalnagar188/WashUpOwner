@@ -65,19 +65,21 @@ class LoginPage extends GetView<AuthController> {
                         style: text.bodyMedium?.copyWith(color: AppColors.ink500),
                       ),
                       24.height,
-                      AppTextField(
-                        controller: controller.phone,
-                        label: 'auth.phone'.tr,
-                        keyboardType: TextInputType.phone,
-                        textInputAction: TextInputAction.next,
-                        textDirection: TextDirection.ltr,
-                        prefix: Icon(Iconsax.call, size: 20.r, color: AppColors.ink500),
+                      Obx(
+                        () => PhoneField(
+                          controller: controller.phone,
+                          label: 'auth.phone'.tr,
+                          country: controller.country.value,
+                          onCountryChanged: (c) => controller.country.value = c,
+                          textInputAction: TextInputAction.next,
+                        ),
                       ),
                       16.height,
                       Obx(
                         () => AppTextField(
                           controller: controller.password,
                           label: 'auth.password'.tr,
+                          hint: 'auth.passwordHint'.tr,
                           obscureText: controller.hidePassword.value,
                           textInputAction: TextInputAction.done,
                           textDirection: TextDirection.ltr,

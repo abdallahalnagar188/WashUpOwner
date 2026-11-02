@@ -14,3 +14,4 @@ export 'logo/app_logo.dart';
 export 'logo/app_wordmark.dart';
 export 'snack_bar/snack_bar.dart';
 export 'text_field/app_text_field.dart';
+export 'text_field/phone_field.dart';
