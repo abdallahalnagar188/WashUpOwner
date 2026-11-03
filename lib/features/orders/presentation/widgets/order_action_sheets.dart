@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../../commons/models/branch_locale.dart';
 import '../../../../commons/models/order.dart';
 import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../commons/widgets/sheets/app_sheet.dart';
@@ -67,7 +68,7 @@ Future<void> showMoreActions(
               leading: Icon(_icons[OrderAction.noShow], size: 22.r, color: AppColors.ink500),
               title: Text('action.no_show'.tr, style: text.titleSmall),
               subtitle: Text(
-                'sheet.noShowFrom'.trParams({'time': FormatHelper.time(order.noShowFrom)}),
+                'sheet.noShowFrom'.trParams({'time': FormatHelper.time(order.noShowFrom, locale: order.locale)}),
                 style: text.bodySmall,
               ),
             ),
@@ -123,11 +124,11 @@ Future<void> startOrderAction(
         context,
         title: 'action.add_service'.tr,
         items: order.availableAddons,
-        label: (item) => '${item.name.value} · ${FormatHelper.money(item.price)}',
+        label: (item) => '${item.name.value} · ${FormatHelper.money(item.price, locale: order.locale)}',
       );
       if (addon != null) await controller.run(action, {'serviceId': addon.id});
     case OrderAction.collectPayment:
-      final fields = await showAppSheet<Map<String, dynamic>>(context, _CollectSheet(total: order.total));
+      final fields = await showAppSheet<Map<String, dynamic>>(context, _CollectSheet(total: order.total, locale: order.locale));
       if (fields != null) await controller.run(action, fields);
     case OrderAction.discount:
       final fields = await showAppSheet<Map<String, dynamic>>(
@@ -188,13 +189,14 @@ Future<T?> _pick<T>(
 
 /// Digits with one optional decimal point, so 29.5 stays 29.5.
 final List<TextInputFormatter> _amountInput = [
-  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,3}')),
 ];
 
 class _CollectSheet extends StatefulWidget {
   final num total;
+  final BranchLocale? locale;
 
-  const _CollectSheet({required this.total});
+  const _CollectSheet({required this.total, this.locale});
 
   @override
   State<_CollectSheet> createState() => _CollectSheetState();
@@ -222,7 +224,7 @@ class _CollectSheetState extends State<_CollectSheet> {
     final text = Theme.of(context).textTheme;
     final change = (_amount ?? 0) - widget.total;
     return AppSheetBody(
-      title: 'sheet.collectTitle'.trParams({'amount': FormatHelper.money(widget.total)}),
+      title: 'sheet.collectTitle'.trParams({'amount': FormatHelper.money(widget.total, locale: widget.locale)}),
       children: [
         Row(
           children: [
@@ -249,7 +251,7 @@ class _CollectSheetState extends State<_CollectSheet> {
           if (change > 0) ...[
             8.height,
             Text(
-              'sheet.change'.trParams({'amount': FormatHelper.money(change)}),
+              'sheet.change'.trParams({'amount': FormatHelper.money(change, locale: widget.locale)}),
               style: text.bodySmall?.copyWith(color: AppColors.success),
             ),
           ],

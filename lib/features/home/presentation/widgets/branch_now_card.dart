@@ -8,6 +8,7 @@ import '../../../../commons/widgets/effects/animated_bar.dart';
 import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 import '../../../../core/helpers/format_helper.dart';
+import '../../../../core/services/session_service.dart';
 
 class BranchNowCard extends StatelessWidget {
   final LiveBranch branch;
@@ -72,7 +73,7 @@ class BranchNowCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${'branch.revenue'.tr}: ${FormatHelper.money(branch.revenueToday)}',
+                '${'branch.revenue'.tr}: ${FormatHelper.money(branch.revenueToday, locale: Get.find<SessionService>().localeOf(branch.id))}',
                 style: text.labelMedium?.copyWith(color: AppColors.ink900),
               ),
             ],

@@ -26,7 +26,7 @@ void main() {
   test('refuses anything else', () {
     expect(type('29', '29a'), '29');
     expect(type('29.5', '29.5.'), '29.5');
-    expect(type('29.55', '29.555'), '29.55');
+    expect(type('29.555', '29.5555'), '29.555');
     expect(parseAmount(''), isNull);
     expect(parseAmount('.'), isNull);
   });

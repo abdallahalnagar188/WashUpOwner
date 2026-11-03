@@ -1,4 +1,5 @@
 import '../../core/enums/enums.dart';
+import 'branch_locale.dart';
 import 'localized_text.dart';
 import 'owner_account.dart';
 
@@ -40,7 +41,9 @@ class OrderSummary {
   final String customerName;
   final LocalizedText serviceName;
   final String? staffName;
+  final String? branchId;
   final LocalizedText? branchName;
+  final BranchLocale? locale;
   final DateTime scheduledAt;
   final num total;
   final OrderSource source;
@@ -58,7 +61,9 @@ class OrderSummary {
     required this.customerName,
     required this.serviceName,
     this.staffName,
+    this.branchId,
     this.branchName,
+    this.locale,
     required this.scheduledAt,
     required this.total,
     required this.source,
@@ -77,7 +82,9 @@ class OrderSummary {
         customerName: json['customerName']?.toString() ?? '',
         serviceName: LocalizedText.fromJson(json['serviceName']),
         staffName: json['staffName'] as String?,
+        branchId: json['branchId'] as String?,
         branchName: json['branchName'] == null ? null : LocalizedText.fromJson(json['branchName']),
+        locale: BranchLocale.fromJson(json['branchLocale']),
         scheduledAt: DateTime.parse(json['scheduledAt'] as String),
         total: json['total'] as num? ?? 0,
         source: OrderSource.fromKey(json['source'] as String?),
@@ -179,6 +186,8 @@ class OrderDetails {
   final OrderStatus status;
   final PaymentStatus paymentStatus;
   final OrderSource source;
+  final String? branchId;
+  final BranchLocale? locale;
   final DateTime scheduledAt;
   final num subtotal;
   final num discountAmount;
@@ -210,6 +219,8 @@ class OrderDetails {
     required this.status,
     required this.paymentStatus,
     required this.source,
+    this.branchId,
+    this.locale,
     required this.scheduledAt,
     required this.subtotal,
     required this.discountAmount,
@@ -249,6 +260,8 @@ class OrderDetails {
       status: OrderStatus.fromKey(order['status'] as String?),
       paymentStatus: PaymentStatus.fromKey(order['paymentStatus'] as String?),
       source: OrderSource.fromKey(order['source'] as String?),
+      branchId: (order['branchId'] ?? json['branchId']) as String?,
+      locale: BranchLocale.fromJson(order['branchLocale'] ?? json['branchLocale']),
       scheduledAt: DateTime.parse(order['scheduledAt'] as String),
       subtotal: order['subtotal'] as num? ?? 0,
       discountAmount: discount?['amount'] as num? ?? 0,

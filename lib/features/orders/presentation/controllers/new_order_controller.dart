@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../commons/models/branch_locale.dart';
 import '../../../../commons/models/service_item.dart';
 import '../../../../core/data/vendor_api.dart';
 import '../../../../core/enums/enums.dart';
@@ -27,6 +28,9 @@ class NewOrderController extends GetxController {
 
   final source = OrderSource.walkIn.obs;
   final branchId = RxnString();
+
+  /// Currency and clock of the chosen branch.
+  BranchLocale? get locale => session.localeOf(branchId.value);
   final services = <ServiceItem>[].obs;
   final selected = <String>{}.obs;
   final loadingServices = true.obs;

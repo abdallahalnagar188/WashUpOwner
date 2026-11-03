@@ -156,7 +156,7 @@ class NewOrderPage extends GetView<NewOrderController> {
                 () => Row(
                   children: [
                     if (controller.total.value != null) ...[
-                      Text(FormatHelper.money(controller.total.value!), style: text.titleLarge),
+                      Text(FormatHelper.money(controller.total.value!, locale: controller.locale), style: text.titleLarge),
                       14.width,
                     ],
                     Expanded(
@@ -207,7 +207,7 @@ class _ServiceTile extends StatelessWidget {
             ),
             10.width,
             Expanded(child: Text(service.name.value, style: text.titleSmall)),
-            Text(FormatHelper.money(service.price), style: text.bodyMedium),
+            Text(FormatHelper.money(service.price, locale: Get.find<NewOrderController>().locale), style: text.bodyMedium),
           ],
         ),
       ),
@@ -260,7 +260,7 @@ class _SlotPicker extends GetView<NewOrderController> {
             children: [
               for (final slot in controller.slots)
                 AppChip(
-                  label: FormatHelper.time(slot),
+                  label: FormatHelper.time(slot, locale: controller.locale),
                   flat: true,
                   selected: controller.slot.value == slot,
                   onTap: () => controller.slot.value = slot,

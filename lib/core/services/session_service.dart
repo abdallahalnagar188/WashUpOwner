@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../commons/models/branch_locale.dart';
 import '../../commons/models/owner_account.dart';
 import '../data/vendor_api.dart';
 import '../enums/enums.dart';
@@ -30,6 +31,14 @@ class SessionService extends GetxService {
     if (branchId.value != allBranches) return branchId.value;
     if (current.homeBranchId != null) return current.homeBranchId;
     return current.branches.isEmpty ? null : current.branches.first.id;
+  }
+
+  /// Currency and time zone of [id], else of the working branch.
+  BranchLocale? localeOf([String? id]) {
+    final branches = account.value?.branches ?? const <OwnerBranch>[];
+    final target = id ?? workingBranchId;
+    return branches.where((b) => b.id == target).firstOrNull?.locale ??
+        branches.map((b) => b.locale).nonNulls.firstOrNull;
   }
 
   void notifyOrderChanged() => orderChanges.value++;

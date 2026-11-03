@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../../commons/models/branch_locale.dart';
 import '../../../../commons/models/order.dart';
 import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../core/constance/app_colors.dart';
@@ -10,8 +11,9 @@ import '../../../../core/helpers/format_helper.dart';
 
 class OrderTimeline extends StatelessWidget {
   final List<OrderTimelineEntry> entries;
+  final BranchLocale? locale;
 
-  const OrderTimeline({super.key, required this.entries});
+  const OrderTimeline({super.key, required this.entries, this.locale});
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +51,7 @@ class OrderTimeline extends StatelessWidget {
                         Expanded(
                           child: Text('status.${entries[i].status.key}'.tr, style: text.bodyMedium),
                         ),
-                        Text(FormatHelper.time(entries[i].at), style: text.bodySmall),
+                        Text(FormatHelper.time(entries[i].at, locale: locale), style: text.bodySmall),
                       ],
                     ),
                   ),

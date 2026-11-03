@@ -82,7 +82,7 @@ class OrderCard extends StatelessWidget {
                     style: text.bodyMedium,
                   ),
                 ),
-                Text(FormatHelper.money(order.total), style: text.titleSmall),
+                Text(FormatHelper.money(order.total, locale: order.locale), style: text.titleSmall),
               ],
             ),
             4.height,
@@ -90,7 +90,7 @@ class OrderCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '${FormatHelper.dayTime(order.scheduledAt)} · ${'source.${order.source.key}'.tr} · ${order.number}',
+                    '${FormatHelper.dayTime(order.scheduledAt, locale: order.locale)} · ${'source.${order.source.key}'.tr} · ${order.number}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: text.labelSmall,

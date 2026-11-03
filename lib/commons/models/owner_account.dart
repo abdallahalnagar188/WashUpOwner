@@ -1,3 +1,4 @@
+import 'branch_locale.dart';
 import 'localized_text.dart';
 
 /// Names match the keys of `permissions` in `/auth/me`.
@@ -18,6 +19,7 @@ class OwnerBranch {
   final String area;
   final bool active;
   final int capacity;
+  final BranchLocale? locale;
 
   const OwnerBranch({
     required this.id,
@@ -25,6 +27,7 @@ class OwnerBranch {
     required this.area,
     required this.active,
     required this.capacity,
+    this.locale,
   });
 
   factory OwnerBranch.fromJson(Map<String, dynamic> json) => OwnerBranch(
@@ -33,6 +36,7 @@ class OwnerBranch {
         area: json['area']?.toString() ?? '',
         active: json['active'] == true,
         capacity: (json['capacity'] as num?)?.toInt() ?? 0,
+        locale: BranchLocale.fromBranchJson(json),
       );
 }
 

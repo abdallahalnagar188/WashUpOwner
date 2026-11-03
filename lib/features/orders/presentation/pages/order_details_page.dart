@@ -74,7 +74,7 @@ class OrderDetailsPage extends GetView<OrderDetailsController> {
                         delay: const Duration(milliseconds: 140),
                         child: RoundedContainer(
                           padding: EdgeInsets.all(16.r),
-                          child: OrderTimeline(entries: order.timeline),
+                          child: OrderTimeline(entries: order.timeline, locale: order.locale),
                         ),
                       ),
                     ],
@@ -224,7 +224,7 @@ class _InfoCard extends StatelessWidget {
           if (order.customerName != null) _Row('orders.customer'.tr, order.customerName!),
           if (order.customerPhone != null) _PhoneRow(phone: order.customerPhone!),
           if (order.vehicleLabel != null) _Row('orders.vehicle'.tr, order.vehicleLabel!),
-          _Row('orders.time'.tr, FormatHelper.dayTime(order.scheduledAt)),
+          _Row('orders.time'.tr, FormatHelper.dayTime(order.scheduledAt, locale: order.locale)),
           _Row('orders.source'.tr, 'source.${order.source.key}'.tr),
           if (order.staffName != null) _Row('orders.staff'.tr, order.staffName!),
           if (order.code != null) _Row('orders.code'.tr, order.code!),
@@ -245,13 +245,13 @@ class _ItemsCard extends StatelessWidget {
       padding: EdgeInsets.all(16.r),
       child: Column(
         children: [
-          for (final item in order.items) _Row(item.name.value, FormatHelper.money(item.price)),
+          for (final item in order.items) _Row(item.name.value, FormatHelper.money(item.price, locale: order.locale)),
           Divider(color: AppColors.line, height: 18.h),
           if (order.discountAmount > 0) ...[
-            _Row('orders.subtotal'.tr, FormatHelper.money(order.subtotal)),
-            _Row('orders.discount'.tr, '- ${FormatHelper.money(order.discountAmount)}'),
+            _Row('orders.subtotal'.tr, FormatHelper.money(order.subtotal, locale: order.locale)),
+            _Row('orders.discount'.tr, '- ${FormatHelper.money(order.discountAmount, locale: order.locale)}'),
           ],
-          _Row('orders.total'.tr, FormatHelper.money(order.total), strong: true),
+          _Row('orders.total'.tr, FormatHelper.money(order.total, locale: order.locale), strong: true),
         ],
       ),
     );

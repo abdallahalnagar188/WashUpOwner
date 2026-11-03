@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 /// Digits with one optional decimal point, so 29.5 stays 29.5. Arabic digits
 /// and separators from the phone's keyboard become plain ones first.
 class AmountInputFormatter extends TextInputFormatter {
-  static final RegExp _shape = RegExp(r'^\d*\.?\d{0,2}$');
+  static final RegExp _shape = RegExp(r'^\d*\.?\d{0,3}$');
 
   const AmountInputFormatter();
 
