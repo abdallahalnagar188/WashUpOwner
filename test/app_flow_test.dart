@@ -51,6 +51,7 @@ FakeServer _server({
   required Map<String, bool> permissions,
   required List<Map<String, dynamic>> actions,
   String nextAction = 'start',
+  String detailsNext = 'start',
 }) {
   return FakeServer((request) {
     final path = request.path;
@@ -97,8 +98,8 @@ FakeServer _server({
     }
     if (path == '/vendor/orders/ord_1') {
       return FakeReply.ok({
-        'allowedActions': ['start', 'cancel', 'note'],
-        'nextAction': 'start',
+        'allowedActions': [detailsNext, 'cancel', 'note'],
+        'nextAction': detailsNext,
         'assignableStaff': [],
         'availableAddons': [],
         'maxDiscountPct': 100,
@@ -188,16 +189,47 @@ void main() {
 
   testWidgets('the live card runs a step that needs no answer', (tester) async {
     final actions = <Map<String, dynamic>>[];
-    final server = _server(permissions: {'runService': true}, actions: actions, nextAction: 'check_in');
+    final server = _server(permissions: {'confirmBooking': true}, actions: actions, nextAction: 'confirm');
     await _signIn(tester, server);
 
     await tester.tap(find.text('التشغيل'));
     await _settle(tester);
-    await tester.tap(find.text('تسجيل الوصول'));
+    await tester.tap(find.text('تأكيد الحجز'));
     await _settle(tester);
 
     expect(actions, [
-      {'action': 'check_in'},
+      {'action': 'confirm'},
+    ]);
+
+    await _finish(tester);
+  });
+
+  testWidgets('check-in asks for the customer code and sends it', (tester) async {
+    final actions = <Map<String, dynamic>>[];
+    final server = _server(
+      permissions: {'runService': true},
+      actions: actions,
+      nextAction: 'check_in',
+      detailsNext: 'check_in',
+    );
+    await _signIn(tester, server);
+
+    await tester.tap(find.text('التشغيل'));
+    await _settle(tester);
+    // The card does not check in on its own: it opens the order.
+    await tester.tap(find.text('تسجيل الوصول'));
+    await _settle(tester);
+    expect(actions, isEmpty);
+
+    await tester.tap(find.text('تسجيل الوصول').last);
+    await _settle(tester);
+    await tester.enterText(find.byType(TextField).last, 'p6zg5');
+    await tester.pump();
+    await tester.tap(find.text('تسجيل الوصول').last);
+    await _settle(tester);
+
+    expect(actions, [
+      {'action': 'check_in', 'code': 'P6ZG5'},
     ]);
 
     await _finish(tester);

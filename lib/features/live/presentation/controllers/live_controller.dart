@@ -97,7 +97,8 @@ class LiveController extends GetxController {
   Future<void> runNext(OrderSummary order) async {
     final next = order.nextAction;
     if (next == null || busyOrderId.value != null) return;
-    const direct = [OrderAction.confirm, OrderAction.checkIn, OrderAction.complete];
+    // Check-in needs the customer's code, so it opens the order like the steps that ask something.
+    const direct = [OrderAction.confirm, OrderAction.complete];
     if (!direct.contains(next)) {
       Get.toNamed(Routes.orderRoute, arguments: order.id);
       return;

@@ -61,6 +61,16 @@ Future<void> showMoreActions(
                 startOrderAction(context, controller, order, action);
               },
             ),
+          if (controller.noShowLater)
+            ListTile(
+              enabled: false,
+              leading: Icon(_icons[OrderAction.noShow], size: 22.r, color: AppColors.ink500),
+              title: Text('action.no_show'.tr, style: text.titleSmall),
+              subtitle: Text(
+                'sheet.noShowFrom'.trParams({'time': FormatHelper.time(order.noShowFrom)}),
+                style: text.bodySmall,
+              ),
+            ),
         ],
       ),
     ),
@@ -79,9 +89,14 @@ Future<void> startOrderAction(
 ) async {
   switch (action) {
     case OrderAction.confirm:
-    case OrderAction.checkIn:
     case OrderAction.complete:
       await controller.run(action);
+    case OrderAction.checkIn:
+      final fields = await showAppSheet<Map<String, dynamic>>(
+        context,
+        _CheckInSheet(canWaive: controller.canWaiveCheckIn),
+      );
+      if (fields != null) await controller.run(action, fields);
     case OrderAction.noShow:
       final ok = await Utils.confirm(
         title: 'action.no_show'.tr,
@@ -347,6 +362,84 @@ class _DiscountSheetState extends State<_DiscountSheet> {
       ],
     );
   }
+}
+
+/// The 5-character code the customer shows (app or lock screen); owners and
+/// managers can check in a customer without a phone, which the audit log notes.
+class _CheckInSheet extends StatefulWidget {
+  final bool canWaive;
+
+  const _CheckInSheet({required this.canWaive});
+
+  @override
+  State<_CheckInSheet> createState() => _CheckInSheetState();
+}
+
+class _CheckInSheetState extends State<_CheckInSheet> {
+  final _input = TextEditingController();
+  bool _waive = false;
+
+  String get _code => _input.text.replaceAll(RegExp(r'\s'), '').toUpperCase();
+
+  @override
+  void dispose() {
+    _input.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final ready = _waive || _code.length == 5;
+    return AppSheetBody(
+      title: 'action.check_in'.tr,
+      children: [
+        Text(
+          (_waive ? 'sheet.checkInWaiveBody' : 'sheet.checkInBody').tr,
+          style: text.bodyMedium?.copyWith(color: AppColors.ink500),
+        ),
+        14.height,
+        if (!_waive)
+          AppTextField(
+            dense: true,
+            controller: _input,
+            label: 'sheet.checkInCode'.tr,
+            autofocus: true,
+            textAlign: TextAlign.center,
+            textDirection: TextDirection.ltr,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
+              LengthLimitingTextInputFormatter(5),
+              _UpperCase(),
+            ],
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) {
+              if (ready) Navigator.of(context).pop({'code': _code});
+            },
+          ),
+        if (widget.canWaive) ...[
+          8.height,
+          TextButton(
+            onPressed: () => setState(() => _waive = !_waive),
+            child: Text((_waive ? 'sheet.checkInUseCode' : 'sheet.checkInWaive').tr),
+          ),
+        ],
+        14.height,
+        AppButton(
+          title: 'action.check_in'.tr,
+          onTap: ready
+              ? () => Navigator.of(context).pop(_waive ? {'waiveCheckIn': true} : {'code': _code})
+              : null,
+        ),
+      ],
+    );
+  }
+}
+
+class _UpperCase extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) =>
+      newValue.copyWith(text: newValue.text.toUpperCase());
 }
 
 class _TextSheet extends StatefulWidget {

@@ -196,6 +196,9 @@ class OrderDetails {
   final num maxDiscountPct;
   final bool locked;
 
+  /// Minutes after the slot before "no-show" is allowed (branch rule).
+  final int noShowGraceMin;
+
   const OrderDetails({
     required this.id,
     required this.number,
@@ -223,6 +226,7 @@ class OrderDetails {
     required this.availableAddons,
     required this.maxDiscountPct,
     required this.locked,
+    this.noShowGraceMin = 15,
   });
 
   factory OrderDetails.fromJson(Map<String, dynamic> json) {
@@ -272,6 +276,12 @@ class OrderDetails {
           .toList(),
       maxDiscountPct: json['maxDiscountPct'] as num? ?? 0,
       locked: json['locked'] == true,
+      noShowGraceMin: (json['noShowGraceMin'] ?? order['noShowGraceMin']) as int? ?? 15,
     );
   }
+
+  /// The wash may mark a no-show only once the customer is this late.
+  DateTime get noShowFrom => scheduledAt.add(Duration(minutes: noShowGraceMin));
+
+  bool get noShowOpen => !DateTime.now().isBefore(noShowFrom);
 }

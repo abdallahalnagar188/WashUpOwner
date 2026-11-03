@@ -29,7 +29,26 @@ class OrderDetailsController extends GetxController {
   List<OrderAction> get actions {
     final current = order.value;
     if (current == null) return const [];
-    return current.allowedActions.where((a) => _session.can(a.permission)).toList();
+    return current.allowedActions
+        .where((a) => _session.can(a.permission))
+        // The server refuses a no-show before the customer is late enough.
+        .where((a) => a != OrderAction.noShow || current.noShowOpen)
+        .toList();
+  }
+
+  /// "No-show" exists but opens later: shown greyed with its time.
+  bool get noShowLater {
+    final current = order.value;
+    return current != null &&
+        current.allowedActions.contains(OrderAction.noShow) &&
+        _session.can(OrderAction.noShow.permission) &&
+        !current.noShowOpen;
+  }
+
+  /// Owners and branch managers may check in a customer who has no phone.
+  bool get canWaiveCheckIn {
+    final role = _session.account.value?.role;
+    return role == 'owner' || role == 'manager';
   }
 
   OrderAction? get primaryAction {

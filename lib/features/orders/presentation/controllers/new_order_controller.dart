@@ -15,6 +15,12 @@ class NewOrderController extends GetxController {
   final session = Get.find<SessionService>();
 
   final plate = TextEditingController();
+
+  /// The plate as the customer app stores it: Arabic-Indic digits as 0-9.
+  String get _plate => plate.text.trim().replaceAllMapped(
+        RegExp('[\u0660-\u0669\u06F0-\u06F9]'),
+        (m) => String.fromCharCode(48 + (m[0]!.codeUnitAt(0) & 0xF)),
+      );
   final phone = TextEditingController();
   final name = TextEditingController();
   final notes = TextEditingController();
@@ -130,7 +136,7 @@ class NewOrderController extends GetxController {
     _recognizeDelay = Timer(const Duration(milliseconds: 500), () async {
       try {
         final match = await _api.recognize(
-          plate: plateReady ? plate.text : '',
+          plate: plateReady ? _plate : '',
           phone: phoneReady ? phone.text : '',
         );
         final customer = match?['customer'] as Map<String, dynamic>?;
@@ -166,7 +172,7 @@ class NewOrderController extends GetxController {
       final id = await _api.createOrder(
         branchId: branchId.value!,
         source: source.value,
-        plate: plate.text.trim(),
+        plate: _plate,
         customerPhone: phone.text.trim(),
         customerName: name.text.trim(),
         serviceIds: selected.toList(),
