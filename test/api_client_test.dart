@@ -44,6 +44,29 @@ void main() {
         reason: 'two 401s must share one refresh');
   });
 
+  test('an expired token on auth/me is refreshed too', () async {
+    final tokens = MemoryTokens(access: 'old', refresh: 'r1');
+    final server = FakeServer((request) {
+      if (request.path == '/vendor/auth/refresh') return FakeReply.ok({'access_token': 'new'});
+      return request.auth == 'Bearer new' ? FakeReply.ok('me') : FakeReply.error(401, 'expired');
+    });
+
+    expect(await fakeClient(server, tokens).get('/vendor/auth/me'), 'me');
+  });
+
+  test('a server error while refreshing keeps the session', () async {
+    var expired = 0;
+    final server = FakeServer((request) => request.path == '/vendor/auth/refresh'
+        ? FakeReply.error(429, 'طلبات تجديد كثيرة')
+        : FakeReply.error(401, 'expired'));
+    final client = fakeClient(server, MemoryTokens(access: 'a', refresh: 'r'))
+      ..onSessionExpired = () => expired++;
+
+    await expectLater(client.get('/vendor/live'), throwsA(isA<ApiException>()));
+
+    expect(expired, 0);
+  });
+
   test('a refused refresh ends the session', () async {
     var expired = 0;
     final server = FakeServer((_) => FakeReply.error(401, 'no'));

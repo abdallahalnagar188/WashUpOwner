@@ -60,4 +60,12 @@ void main() {
   test('flag emoji', () {
     expect(_c(IsoCode.EG).flag, '🇪🇬');
   });
+
+  test('phone bookings follow the branch country', () {
+    final saudi = PhoneHelper.forTimezone('Asia/Riyadh');
+    expect(saudi.iso, IsoCode.SA);
+    expect(PhoneHelper.forApi(PhoneHelper.parse('0501234567', saudi)!), '+966501234567');
+    expect(PhoneHelper.forApi(PhoneHelper.parse('01012345678', PhoneHelper.forTimezone('Africa/Cairo'))!), '01012345678');
+    expect(PhoneHelper.forTimezone(null), PhoneHelper.defaultCountry);
+  });
 }

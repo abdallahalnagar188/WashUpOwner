@@ -24,12 +24,21 @@ class _SplashPageState extends State<SplashPage> {
     _open();
   }
 
+  /// The saved session could not be checked (no internet or a server error).
+  bool _unreachable = false;
+
   Future<void> _open() async {
-    final results = await Future.wait([
+    if (_unreachable) setState(() => _unreachable = false);
+    final results = await Future.wait<bool?>([
       Get.find<SessionService>().restore(),
       Future<bool>.delayed(const Duration(milliseconds: 1100), () => true),
     ]);
-    Get.offAllNamed(results.first ? Routes.mainRoute : Routes.loginRoute);
+    final restored = results.first;
+    if (restored == null) {
+      if (mounted) setState(() => _unreachable = true);
+      return;
+    }
+    Get.offAllNamed(restored ? Routes.mainRoute : Routes.loginRoute);
   }
 
   @override
@@ -65,6 +74,18 @@ class _SplashPageState extends State<SplashPage> {
                       ),
                 ),
               ),
+              if (_unreachable) ...[
+                28.height,
+                Text(
+                  'error.offline'.tr,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+                ),
+                12.height,
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 48.w),
+                  child: AppButton(title: 'error.retry'.tr, variant: AppButtonVariant.sand, onTap: _open),
+                ),
+              ],
             ],
           ),
         ),

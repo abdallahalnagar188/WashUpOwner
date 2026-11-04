@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../commons/models/branch_locale.dart';
 import '../../commons/models/owner_account.dart';
 import '../data/vendor_api.dart';
+import '../network/api_client.dart';
 import '../enums/enums.dart';
 import '../local/cache_controller.dart';
 import '../local/cache_helper.dart';
@@ -43,14 +44,17 @@ class SessionService extends GetxService {
 
   void notifyOrderChanged() => orderChanges.value++;
 
-  /// Reopens the last session. False sends the user to the login page.
-  Future<bool> restore() async {
+  /// Reopens the last session. False sends the user to the login page; null
+  /// means the server could not be reached, so the session is kept for a retry.
+  Future<bool?> restore() async {
     if (!CacheHelper.isLoggedIn) return false;
     try {
       _setAccount(await _api.me());
       return true;
+    } on ApiException catch (e) {
+      return e.statusCode == 401 || e.statusCode == 403 ? false : null;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 

@@ -72,6 +72,26 @@ class PhoneHelper {
 
   static PhoneCountry get defaultCountry => countries.first;
 
+  /// Each country's time zone, as `countries.timezone` stores it.
+  static const _byTimezone = {
+    'Africa/Cairo': IsoCode.EG, 'Asia/Riyadh': IsoCode.SA, 'Asia/Dubai': IsoCode.AE, 'Asia/Kuwait': IsoCode.KW,
+    'Asia/Qatar': IsoCode.QA, 'Asia/Bahrain': IsoCode.BH, 'Asia/Muscat': IsoCode.OM, 'Asia/Amman': IsoCode.JO,
+    'Asia/Beirut': IsoCode.LB, 'Asia/Baghdad': IsoCode.IQ, 'Asia/Damascus': IsoCode.SY, 'Asia/Hebron': IsoCode.PS,
+    'Asia/Gaza': IsoCode.PS, 'Asia/Aden': IsoCode.YE, 'Africa/Tripoli': IsoCode.LY, 'Africa/Tunis': IsoCode.TN,
+    'Africa/Algiers': IsoCode.DZ, 'Africa/Casablanca': IsoCode.MA, 'Africa/Khartoum': IsoCode.SD,
+    'Africa/Nouakchott': IsoCode.MR, 'Africa/Mogadishu': IsoCode.SO, 'Africa/Djibouti': IsoCode.DJ,
+    'Indian/Comoro': IsoCode.KM,
+  };
+
+  /// The country of a branch in [timezone]; Egypt when unknown.
+  static PhoneCountry forTimezone(String? timezone) =>
+      byIso(_byTimezone[timezone] ?? IsoCode.EG) ?? defaultCountry;
+
+  /// What the vendor API takes: Egypt as typed locally ("010..."), other
+  /// countries as E.164.
+  static String forApi(ParsedPhone parsed) =>
+      parsed.country == defaultCountry ? '0${parsed.number.nsn}' : parsed.e164;
+
   static PhoneCountry? byIso(IsoCode iso) {
     for (final c in countries) {
       if (c.iso == iso) return c;

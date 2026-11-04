@@ -30,7 +30,7 @@ class AuthController extends GetxController {
     error.value = null;
     loading.value = true;
     try {
-      await Get.find<SessionService>().signIn(phone: _loginPhone(parsed), password: password.text);
+      await Get.find<SessionService>().signIn(phone: PhoneHelper.forApi(parsed), password: password.text);
       password.clear();
       Get.offAllNamed(Routes.mainRoute);
     } on ApiException catch (e) {
@@ -41,11 +41,6 @@ class AuthController extends GetxController {
       loading.value = false;
     }
   }
-
-  /// The vendor login has only ever received Egyptian numbers typed locally
-  /// ("010..."), so Egypt keeps that form; every other country goes as E.164.
-  String _loginPhone(ParsedPhone parsed) =>
-      parsed.country == PhoneHelper.defaultCountry ? '0${parsed.number.nsn}' : parsed.e164;
 
   @override
   void onClose() {

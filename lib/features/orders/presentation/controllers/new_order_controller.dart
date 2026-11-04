@@ -7,6 +7,7 @@ import '../../../../commons/models/branch_locale.dart';
 import '../../../../commons/models/service_item.dart';
 import '../../../../core/data/vendor_api.dart';
 import '../../../../core/enums/enums.dart';
+import '../../../../core/helpers/phone_helper.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/session_service.dart';
 import '../../../../core/utils/utils.dart';
@@ -31,6 +32,15 @@ class NewOrderController extends GetxController {
 
   /// Currency and clock of the chosen branch.
   BranchLocale? get locale => session.localeOf(branchId.value);
+
+  /// Phone numbers are checked against the chosen branch's country.
+  PhoneCountry get phoneCountry => PhoneHelper.forTimezone(locale?.timezone);
+
+  /// The typed phone in the form the API takes, null while it is not a valid mobile.
+  String? get _phone {
+    final parsed = PhoneHelper.parse(phone.text, phoneCountry);
+    return parsed == null ? null : PhoneHelper.forApi(parsed);
+  }
   final services = <ServiceItem>[].obs;
   final selected = <String>{}.obs;
   final loadingServices = true.obs;
@@ -135,13 +145,13 @@ class NewOrderController extends GetxController {
   void _scheduleRecognize() {
     _recognizeDelay?.cancel();
     final plateReady = plate.text.replaceAll(RegExp(r'[\s-]'), '').length >= 4;
-    final phoneReady = phone.text.replaceAll(RegExp(r'\D'), '').length >= 10;
+    final phoneReady = _phone != null;
     if (!plateReady && !phoneReady) return;
     _recognizeDelay = Timer(const Duration(milliseconds: 500), () async {
       try {
         final match = await _api.recognize(
           plate: plateReady ? _plate : '',
-          phone: phoneReady ? phone.text : '',
+          phone: phoneReady ? _phone! : '',
         );
         final customer = match?['customer'] as Map<String, dynamic>?;
         if (customer == null) return;
@@ -159,8 +169,7 @@ class NewOrderController extends GetxController {
     if (plate.text.trim().length < 2) return 'newOrder.needPlate'.tr;
     if (selected.isEmpty) return 'newOrder.needService'.tr;
     if (isPhone) {
-      final digits = phone.text.replaceAll(RegExp(r'\D'), '');
-      if (digits.length != 11 || !digits.startsWith('01')) return 'newOrder.badPhone'.tr;
+      if (_phone == null) return 'newOrder.badPhone'.trParams({'example': phoneCountry.exampleLtr});
       if (slot.value == null) return 'newOrder.needSlot'.tr;
     }
     return null;
@@ -177,7 +186,7 @@ class NewOrderController extends GetxController {
         branchId: branchId.value!,
         source: source.value,
         plate: _plate,
-        customerPhone: phone.text.trim(),
+        customerPhone: _phone ?? phone.text.trim(),
         customerName: name.text.trim(),
         serviceIds: selected.toList(),
         scheduledAt: isPhone ? slot.value : null,

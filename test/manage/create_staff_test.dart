@@ -18,6 +18,11 @@ Future<String?> create(String message) {
 void main() {
   test('reads the temporary password out of the reply message', () async {
     expect(await create('تمت إضافة الموظف. كلمة المرور المؤقتة Ab12cd'), 'Ab12cd');
+    // The live server writes a colon and a note after it.
+    expect(
+      await create('تمت إضافة الموظف. كلمة المرور المؤقتة: Xy9-kLm2 (أرسلها لصاحب الحساب، تظهر مرة واحدة فقط)'),
+      'Xy9-kLm2',
+    );
   });
 
   test('a message without a password returns null', () async {

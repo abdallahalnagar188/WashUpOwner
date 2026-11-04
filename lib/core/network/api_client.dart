@@ -43,6 +43,14 @@ class ApiClient {
 
   Future<String?>? _refreshing;
 
+  /// Calls that sign in or renew the session themselves; a 401 there is final.
+  static const _noRefresh = {
+    '/vendor/auth/login',
+    '/vendor/auth/refresh',
+    '/vendor/auth/forgot-password',
+    '/vendor/auth/reset-password',
+  };
+
   ApiClient({required TokenStore tokens, Dio? dio})
       : _tokens = tokens,
         _dio = dio ??
@@ -109,7 +117,7 @@ class ApiClient {
     try {
       return await _request(method, path, query: query, body: body);
     } on DioException catch (error) {
-      if (error.response?.statusCode == 401 && !path.contains('/auth/')) {
+      if (error.response?.statusCode == 401 && !_noRefresh.contains(path)) {
         final token = await _refresh();
         if (token != null) {
           try {
@@ -170,8 +178,9 @@ class ApiClient {
       );
       return data['access_token'] as String;
     } on DioException catch (error) {
-      // No answer at all (offline) keeps the session; a refusal ends it.
-      if (error.response != null) onSessionExpired?.call();
+      // Only a refusal ends the session; offline, 429 or a server error keep it.
+      final status = error.response?.statusCode;
+      if (status == 401 || status == 403) onSessionExpired?.call();
       return null;
     } on ApiException {
       onSessionExpired?.call();

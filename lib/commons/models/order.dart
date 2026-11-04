@@ -289,7 +289,11 @@ class OrderDetails {
           .toList(),
       maxDiscountPct: json['maxDiscountPct'] as num? ?? 0,
       locked: json['locked'] == true,
-      noShowGraceMin: (json['noShowGraceMin'] ?? order['noShowGraceMin']) as int? ?? 15,
+      noShowGraceMin: ((json['noShowGraceMin'] ??
+                  order['noShowGraceMin'] ??
+                  ((json['branch'] as Map?)?['settings'] as Map?)?['noShowGraceMin']) as num?)
+              ?.toInt() ??
+          15,
     );
   }
 

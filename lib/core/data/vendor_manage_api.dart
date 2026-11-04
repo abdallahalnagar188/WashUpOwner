@@ -160,7 +160,11 @@ class VendorManageApi {
       'maxDiscountPct': maxDiscountPct,
       'permissions': permissions,
     });
-    return RegExp(r'المؤقتة\s+(\S+)').firstMatch(reply['message']?.toString() ?? '')?.group(1);
+    final data = reply['data'];
+    final given = data is Map ? data['tempPassword']?.toString() : null;
+    if (given != null && given.isNotEmpty) return given;
+    // Older servers only put it in the message: "كلمة المرور المؤقتة: XXXX (…)".
+    return RegExp(r'المؤقتة\s*:?\s*([^\s(]+)').firstMatch(reply['message']?.toString() ?? '')?.group(1);
   }
 
   Future<void> updateStaff(
