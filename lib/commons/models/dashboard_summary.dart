@@ -1,3 +1,4 @@
+import '../../core/enums/enums.dart';
 import 'localized_text.dart';
 import 'order.dart';
 
@@ -15,6 +16,48 @@ class DashboardKpi {
         key: json['key'] as String,
         value: json['value'] as num? ?? 0,
         delta: json['delta'] as num?,
+      );
+}
+
+/// A car currently at a branch (`carsInside` of `/vendor/dashboard`). The server
+/// sends its own shape (`CarInside` in the portal's `types/vendor/dashboard.ts`),
+/// not an order row: it has `orderId` instead of `id` and no `scheduledAt`.
+class CarInside {
+  final String orderId;
+  final String number;
+  final String plate;
+  final OrderStatus status;
+  final bool paymentPending;
+  final LocalizedText serviceName;
+  final LocalizedText? branchName;
+  final String? staffName;
+  final DateTime? since;
+  final int overdueMin;
+
+  const CarInside({
+    required this.orderId,
+    required this.number,
+    required this.plate,
+    required this.status,
+    required this.paymentPending,
+    required this.serviceName,
+    this.branchName,
+    this.staffName,
+    this.since,
+    this.overdueMin = 0,
+  });
+
+  factory CarInside.fromJson(Map<String, dynamic> json) => CarInside(
+        orderId: (json['orderId'] ?? json['id'])?.toString() ?? '',
+        number: json['number']?.toString() ?? '',
+        plate: json['plate']?.toString() ?? '',
+        status: OrderStatus.fromKey(json['status'] as String?),
+        paymentPending: json['paymentPending'] == true,
+        serviceName: LocalizedText.fromJson(json['serviceName']),
+        branchName: json['branchName'] == null ? null : LocalizedText.fromJson(json['branchName']),
+        staffName: json['staffName'] as String?,
+        since: DateTime.tryParse(json['since']?.toString() ?? ''),
+        overdueMin: (json['overdueMin'] as num?)?.toInt() ?? 0,
       );
 }
 
@@ -96,7 +139,7 @@ class DashboardSummary {
   final DateTime generatedAt;
   final List<DashboardKpi> kpis;
   final List<LiveBranch> liveBranches;
-  final List<OrderSummary> carsInside;
+  final List<CarInside> carsInside;
   final List<DashboardAlert> alerts;
   final List<ChartPoint> revenueByHour;
 
@@ -127,7 +170,8 @@ class DashboardSummary {
           .map((b) => LiveBranch.fromJson(b as Map<String, dynamic>))
           .toList(),
       carsInside: (json['carsInside'] as List? ?? const [])
-          .map((o) => OrderSummary.fromJson(o as Map<String, dynamic>))
+          .map((o) => CarInside.fromJson(o as Map<String, dynamic>))
+          .where((car) => car.orderId.isNotEmpty)
           .toList(),
       alerts: (json['alerts'] as List? ?? const [])
           .map((a) => DashboardAlert.fromJson(a as Map<String, dynamic>))

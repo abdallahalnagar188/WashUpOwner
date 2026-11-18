@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
-import '../../../../commons/models/order.dart';
+import '../../../../commons/models/dashboard_summary.dart';
 import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../commons/widgets/effects/pressable.dart';
 import '../../../../core/constance/app_colors.dart';
@@ -11,7 +11,7 @@ import '../../../../core/extensions/sized_box_extension.dart';
 import '../../../../core/routing/app_routes.dart';
 
 class CarsInsideSection extends StatelessWidget {
-  final List<OrderSummary> cars;
+  final List<CarInside> cars;
 
   const CarsInsideSection({super.key, required this.cars});
 
@@ -28,7 +28,7 @@ class CarsInsideSection extends StatelessWidget {
       children: [
         for (final car in cars)
           Pressable(
-            onTap: () => Get.toNamed(Routes.orderRoute, arguments: car.id),
+            onTap: () => Get.toNamed(Routes.orderRoute, arguments: car.orderId),
             child: RoundedContainer(
               margin: EdgeInsets.fromLTRB(20.w, 0, 20.w, 10.h),
               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
@@ -49,7 +49,7 @@ class CarsInsideSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(car.plate, style: text.titleSmall),
-                        Text(car.vehicleLabel, style: text.bodySmall),
+                        Text(car.serviceName.value, style: text.bodySmall),
                       ],
                     ),
                   ),

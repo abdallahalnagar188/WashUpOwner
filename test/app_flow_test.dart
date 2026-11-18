@@ -67,7 +67,21 @@ FakeServer _server({
           {'key': 'pendingPayments', 'value': 1, 'delta': null},
         ],
         'liveBranches': [],
-        'carsInside': [_row],
+        // Same shape as the portal's `CarInside` (orderId, no scheduledAt).
+        'carsInside': [
+          {
+            'orderId': 'ord_1',
+            'number': 'WU-1',
+            'plate': 'ABC 123',
+            'status': 'waiting',
+            'paymentPending': false,
+            'serviceName': {'ar': 'غسيل', 'en': 'Wash'},
+            'branchName': {'ar': 'الفرع', 'en': 'Branch'},
+            'staffName': null,
+            'since': '2026-11-01T10:05:00.000Z',
+            'overdueMin': 0,
+          },
+        ],
         'alerts': [],
         'charts': {'revenueByHour': []},
       });

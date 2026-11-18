@@ -94,6 +94,38 @@ void main() {
     expect(summary.liveBranches.single.staffOnShift.single.name, 'Staff');
   });
 
+  test('reads /dashboard with a car inside (server CarInside shape)', () {
+    // GAP-006: this payload used to throw `null is not a subtype of String`.
+    final summary = DashboardSummary.fromJson({
+      'generatedAt': '2026-11-01T10:40:01.781Z',
+      'kpis': [],
+      'liveBranches': [],
+      'carsInside': [
+        {
+          'orderId': 'ord_9',
+          'number': 'WU-9',
+          'plate': 'XYZ 987',
+          'status': 'in_service',
+          'paymentPending': false,
+          'serviceName': {'ar': 'غسيل', 'en': 'Wash'},
+          'branchName': {'ar': 'الفرع', 'en': 'Branch'},
+          'staffName': 'Staff',
+          'since': '2026-11-01T10:20:00.000Z',
+          'overdueMin': 5,
+        },
+      ],
+      'alerts': [],
+      'charts': {'revenueByHour': []},
+    });
+
+    final car = summary.carsInside.single;
+    expect(car.orderId, 'ord_9');
+    expect(car.plate, 'XYZ 987');
+    expect(car.status, OrderStatus.inService);
+    expect(car.staffName, 'Staff');
+    expect(car.overdueMin, 5);
+  });
+
   test('reads /live with cars in its columns', () {
     final board = LiveBoard.fromJson({
       'generatedAt': '2026-11-01T10:40:01.781Z',

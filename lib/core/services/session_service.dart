@@ -49,7 +49,12 @@ class SessionService extends GetxService {
   Future<bool?> restore() async {
     if (!CacheHelper.isLoggedIn) return false;
     try {
-      _setAccount(await _api.me());
+      final me = await _api.me();
+      if (_isEmployee(me)) {
+        await _endEmployeeSession();
+        return false;
+      }
+      _setAccount(me);
       return true;
     } on ApiException catch (e) {
       return e.statusCode == 401 || e.statusCode == 403 ? false : null;
@@ -59,8 +64,25 @@ class SessionService extends GetxService {
   }
 
   Future<void> signIn({required String phone, required String password}) async {
-    _setAccount(await _api.login(phone: phone, password: password));
+    final account = await _api.login(phone: phone, password: password);
+    // Employees work from the partner web portal (VENDOR_API.md / PARTNER_APP_HANDOFF.md):
+    // this app shows owner and manager data, so their session is closed right away (GAP-004).
+    if (_isEmployee(account)) {
+      await _endEmployeeSession();
+      throw ApiException('auth.employeeNotAllowed'.tr, statusCode: 403);
+    }
+    _setAccount(account);
     await CacheController().setter(key: CacheKeys.loggedIn, value: true);
+  }
+
+  static bool _isEmployee(OwnerAccount account) => account.role == 'employee';
+
+  /// Ends the server session when possible; the local session is cleared either way.
+  Future<void> _endEmployeeSession() async {
+    try {
+      await _api.logout();
+    } catch (_) {}
+    await clearLocal();
   }
 
   Future<void> signOut() async {
