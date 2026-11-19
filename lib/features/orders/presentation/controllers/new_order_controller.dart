@@ -33,14 +33,19 @@ class NewOrderController extends GetxController {
   /// Currency and clock of the chosen branch.
   BranchLocale? get locale => session.localeOf(branchId.value);
 
-  /// Phone numbers are checked against the chosen branch's country.
-  PhoneCountry get phoneCountry => PhoneHelper.forTimezone(locale?.timezone);
+  /// Country code of the mobile field, like the login page. Starts as the
+  /// chosen branch's country and the user can change it.
+  final country = PhoneHelper.defaultCountry.obs;
+
+  /// The typed mobile number parsed for the selected country, null when invalid.
+  ParsedPhone? get _parsedPhone => PhoneHelper.parse(phone.text, country.value);
 
   /// The typed phone in the form the API takes, null while it is not a valid mobile.
   String? get _phone {
-    final parsed = PhoneHelper.parse(phone.text, phoneCountry);
+    final parsed = _parsedPhone;
     return parsed == null ? null : PhoneHelper.forApi(parsed);
   }
+
   final services = <ServiceItem>[].obs;
   final selected = <String>{}.obs;
   final loadingServices = true.obs;
@@ -50,7 +55,6 @@ class NewOrderController extends GetxController {
   final slot = Rxn<DateTime>();
   final loadingSlots = false.obs;
   final submitting = false.obs;
-  final error = RxnString();
   final recognized = false.obs;
 
   Timer? _recognizeDelay;
@@ -61,9 +65,15 @@ class NewOrderController extends GetxController {
   void onInit() {
     super.onInit();
     branchId.value = session.workingBranchId;
+    _syncCountry();
     _loadServices();
     plate.addListener(_scheduleRecognize);
     phone.addListener(_scheduleRecognize);
+  }
+
+  /// Takes the country of the chosen branch.
+  void _syncCountry() {
+    country.value = PhoneHelper.forTimezone(locale?.timezone);
   }
 
   void selectSource(OrderSource value) {
@@ -74,6 +84,7 @@ class NewOrderController extends GetxController {
 
   void selectBranch(String id) {
     branchId.value = id;
+    _syncCountry();
     selected.clear();
     total.value = null;
     slots.clear();
@@ -87,8 +98,38 @@ class NewOrderController extends GetxController {
     _loadSlots();
   }
 
+  /// The selected primary services. An order takes exactly one, the rest are add-ons.
+  List<ServiceItem> get _selectedPrimary =>
+      services.where((s) => !s.isAddon && selected.contains(s.id)).toList();
+
+  /// Adds or removes a service. One primary service per order; add-ons can be
+  /// stacked on it and are cleared when it goes.
   void toggleService(String id) {
-    selected.contains(id) ? selected.remove(id) : selected.add(id);
+    final service = services.where((s) => s.id == id).firstOrNull;
+    if (service == null) return;
+
+    if (selected.contains(id)) {
+      selected.remove(id);
+      if (!service.isAddon && _selectedPrimary.isEmpty) {
+        final addons = services.where((s) => s.isAddon && selected.contains(s.id)).toList();
+        for (final addon in addons) {
+          selected.remove(addon.id);
+        }
+      }
+    } else if (service.isAddon) {
+      if (_selectedPrimary.isEmpty) {
+        Utils.getSnakBar(message: 'newOrder.chooseMainFirst'.tr, type: TosterTypes.warning);
+        return;
+      }
+      selected.add(id);
+    } else {
+      final previous = _selectedPrimary;
+      for (final primary in previous) {
+        selected.remove(primary.id);
+      }
+      selected.add(id);
+    }
+
     slot.value = null;
     _loadPrice();
     if (isPhone) _loadSlots();
@@ -102,7 +143,7 @@ class NewOrderController extends GetxController {
       final items = await _api.services(branchId: branch);
       services.assignAll(items.where((s) => s.active));
     } catch (e) {
-      error.value = e.toString();
+      Utils.getSnakBar(message: e.toString(), type: TosterTypes.failed);
     } finally {
       loadingServices.value = false;
     }
@@ -136,7 +177,7 @@ class NewOrderController extends GetxController {
       slots.assignAll(await _api.availability(branchId: branch, date: date, serviceIds: selected.toList()));
     } catch (e) {
       slots.clear();
-      error.value = e.toString();
+      Utils.getSnakBar(message: e.toString(), type: TosterTypes.failed);
     } finally {
       loadingSlots.value = false;
     }
@@ -164,29 +205,33 @@ class NewOrderController extends GetxController {
     });
   }
 
+  /// The first problem with the form, or null when it can be submitted.
   String? get _problem {
     if (branchId.value == null) return 'newOrder.chooseBranch'.tr;
     if (plate.text.trim().length < 2) return 'newOrder.needPlate'.tr;
-    if (selected.isEmpty) return 'newOrder.needService'.tr;
-    if (isPhone) {
-      if (_phone == null) return 'newOrder.badPhone'.trParams({'example': phoneCountry.exampleLtr});
-      if (slot.value == null) return 'newOrder.needSlot'.tr;
-    }
+    if (phone.text.trim().isEmpty) return 'newOrder.needPhone'.tr;
+    if (_phone == null) return 'newOrder.badPhone'.trParams({'example': country.value.exampleLtr});
+    if (_selectedPrimary.length != 1) return 'newOrder.needService'.tr;
+    if (isPhone && slot.value == null) return 'newOrder.needSlot'.tr;
     return null;
   }
 
   Future<void> submit() async {
     if (submitting.value) return;
     final problem = _problem;
-    error.value = problem;
-    if (problem != null) return;
+    if (problem != null) {
+      Utils.getSnakBar(message: problem, type: TosterTypes.warning);
+      return;
+    }
+    // A full international number may belong to another supported country.
+    country.value = _parsedPhone!.country;
     submitting.value = true;
     try {
       final id = await _api.createOrder(
         branchId: branchId.value!,
         source: source.value,
         plate: _plate,
-        customerPhone: _phone ?? phone.text.trim(),
+        customerPhone: _phone!,
         customerName: name.text.trim(),
         serviceIds: selected.toList(),
         scheduledAt: isPhone ? slot.value : null,
@@ -196,7 +241,7 @@ class NewOrderController extends GetxController {
       Get.offNamed(Routes.orderRoute, arguments: id);
       Utils.getSnakBar(message: 'newOrder.created'.tr, type: TosterTypes.sucsses);
     } catch (e) {
-      error.value = e.toString();
+      Utils.getSnakBar(message: e.toString(), type: TosterTypes.failed);
     } finally {
       submitting.value = false;
     }

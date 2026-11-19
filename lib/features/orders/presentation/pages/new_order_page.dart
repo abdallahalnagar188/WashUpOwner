@@ -79,12 +79,14 @@ class NewOrderPage extends GetView<NewOrderController> {
                   prefix: Icon(Iconsax.car, size: 20.r, color: AppColors.ink500),
                 ),
                 12.height,
-                AppTextField(
-                  controller: controller.phone,
-                  label: 'newOrder.phone'.tr,
-                  keyboardType: TextInputType.phone,
-                  textDirection: TextDirection.ltr,
-                  prefix: Icon(Iconsax.call, size: 20.r, color: AppColors.ink500),
+                Obx(
+                  () => PhoneField(
+                    controller: controller.phone,
+                    label: 'newOrder.phone'.tr,
+                    country: controller.country.value,
+                    onCountryChanged: (c) => controller.country.value = c,
+                    textInputAction: TextInputAction.next,
+                  ),
                 ),
                 12.height,
                 AppTextField(
@@ -113,6 +115,17 @@ class NewOrderPage extends GetView<NewOrderController> {
                   }
                   return Column(
                     children: [
+                      if (controller.selected.isNotEmpty)
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Padding(
+                            padding: EdgeInsets.only(bottom: 8.h),
+                            child: Text(
+                              'newOrder.servicesSelected'.trParams({'count': '${controller.selected.length}'}),
+                              style: text.bodySmall?.copyWith(color: AppColors.primary),
+                            ),
+                          ),
+                        ),
                       for (final service in controller.services)
                         _ServiceTile(
                           service: service,
@@ -132,14 +145,6 @@ class NewOrderPage extends GetView<NewOrderController> {
                   label: 'newOrder.notes'.tr,
                   maxLines: 2,
                 ),
-                Obx(() {
-                  final message = controller.error.value;
-                  if (message == null) return empty;
-                  return Padding(
-                    padding: EdgeInsets.only(top: 12.h),
-                    child: Text(message, style: text.bodySmall?.copyWith(color: AppColors.danger)),
-                  );
-                }),
               ],
             ),
           ),

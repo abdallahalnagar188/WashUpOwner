@@ -152,7 +152,7 @@ class _MenuGrid extends StatelessWidget {
         crossAxisCount: 3,
         crossAxisSpacing: 10.w,
         mainAxisSpacing: 10.h,
-        mainAxisExtent: 92.h,
+        mainAxisExtent: 96.h,
       ),
       itemBuilder: (_, index) {
         final entry = entries[index];
