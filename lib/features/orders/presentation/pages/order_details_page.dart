@@ -227,7 +227,8 @@ class _InfoCard extends StatelessWidget {
           _Row('orders.time'.tr, FormatHelper.dayTime(order.scheduledAt, locale: order.locale)),
           _Row('orders.source'.tr, 'source.${order.source.key}'.tr),
           if (order.staffName != null) _Row('orders.staff'.tr, order.staffName!),
-          if (order.code != null) _Row('orders.code'.tr, order.code!),
+          // No check-in code here (GAP-031): the customer shows it on arrival; the server no
+          // longer sends it to vendor apps.
         ],
       ),
     );

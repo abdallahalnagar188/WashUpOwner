@@ -66,10 +66,29 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
 
   bool _nameOk(String text) => text.trim().length >= 2;
 
+  /// Same rule as the server (GAP-013): Egypt keeps 10–5000 ج.م; other currencies take any
+  /// amount above zero with at most the currency's decimals (SAR 29.5, KWD 1.250).
   String? get _priceError {
     if (_price.text.isEmpty) return null;
     final value = _priceValue;
-    return value == null || value < 10 || value > 5000 ? 'services.priceRange'.tr : null;
+    final locale = _session.localeOf(_branchId);
+    if (locale == null || locale.timezone == 'Africa/Cairo') {
+      return value == null || value < 10 || value > 5000 ? 'services.priceRange'.tr : null;
+    }
+    final factor = _pow10(locale.decimals);
+    final scaled = value == null ? 0 : value * factor;
+    final tooPrecise = (scaled - scaled.round()).abs() > 1e-6;
+    return value == null || value <= 0 || value > 10000000 || tooPrecise
+        ? 'services.priceRangeIntl'.trParams({'decimals': '${locale.decimals}', 'symbol': locale.symbol})
+        : null;
+  }
+
+  static num _pow10(int n) {
+    var r = 1;
+    for (var i = 0; i < n; i++) {
+      r *= 10;
+    }
+    return r;
   }
 
   String? get _durationError {
