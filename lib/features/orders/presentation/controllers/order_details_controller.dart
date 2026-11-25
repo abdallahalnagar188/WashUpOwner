@@ -1,15 +1,15 @@
-import 'dart:async';
-
 import 'package:get/get.dart';
 
 import '../../../../commons/models/order.dart';
 import '../../../../core/data/vendor_api.dart';
 import '../../../../core/enums/enums.dart';
 import '../../../../core/services/session_service.dart';
+import '../../../../core/utils/poller.dart';
 import '../../../../core/utils/utils.dart';
 
 class OrderDetailsController extends GetxController {
-  static const Duration pollEvery = Duration(seconds: 15);
+  /// 30 s like the partner-app contract, and only in the foreground (GAP-099).
+  static const Duration pollEvery = Duration(seconds: 30);
 
   final String orderId;
 
@@ -22,7 +22,8 @@ class OrderDetailsController extends GetxController {
   final error = RxnString();
   final busy = false.obs;
 
-  Timer? _poll;
+  /// Coming back from the background reloads at once: nothing else refreshes this page.
+  late final Poller _poll = Poller(pollEvery, load, tickOnResume: true);
   int _requestId = 0;
 
   /// What the server allows, minus what this account may not do. The server
@@ -64,7 +65,7 @@ class OrderDetailsController extends GetxController {
   void onInit() {
     super.onInit();
     load();
-    _poll = Timer.periodic(pollEvery, (_) => load());
+    _poll.start();
   }
 
   Future<void> load() async {
@@ -100,7 +101,7 @@ class OrderDetailsController extends GetxController {
 
   @override
   void onClose() {
-    _poll?.cancel();
+    _poll.dispose();
     super.onClose();
   }
 }

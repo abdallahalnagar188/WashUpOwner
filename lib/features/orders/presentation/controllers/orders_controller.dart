@@ -3,9 +3,10 @@ import 'package:get/get.dart';
 import '../../../../commons/models/order.dart';
 import '../../../../core/data/vendor_api.dart';
 import '../../../../core/services/session_service.dart';
+import '../../../../core/utils/workers.dart';
 import '../../../main/presentation/controllers/main_controller.dart';
 
-class OrdersController extends GetxController {
+class OrdersController extends GetxController with DisposesWorkers {
   static const Map<String, List<String>> tabs = {
     'orders': ['active', 'waiting', 'in_service', 'payment_pending', 'paid'],
     'bookings': ['today', 'upcoming', 'completed', 'cancelled', 'no_show'],
@@ -38,17 +39,17 @@ class OrdersController extends GetxController {
   void onInit() {
     super.onInit();
     load();
-    ever(_session.branchId, (_) {
+    keep(ever(_session.branchId, (_) {
       _cache.clear();
       load();
-    });
-    ever(_session.orderChanges, (_) {
+    }));
+    keep(ever(_session.orderChanges, (_) {
       _cache.clear();
       load(silent: true);
-    });
-    ever(Get.find<MainController>().selectedIndex, (index) {
+    }));
+    keep(ever(Get.find<MainController>().selectedIndex, (index) {
       if (index == MainController.ordersTab) load(silent: true);
-    });
+    }));
   }
 
   void selectView(String value) {

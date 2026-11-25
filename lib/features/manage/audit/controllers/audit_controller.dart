@@ -9,7 +9,7 @@ class AuditController extends PagedController<AuditEntry> {
   void onInit() {
     super.onInit();
     load();
-    ever(session.branchId, (_) => load());
+    keep(ever(session.branchId, (_) => load()));
   }
 
   @override

@@ -6,10 +6,11 @@ import '../../../../core/enums/enums.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/session_service.dart';
 import '../../../../core/utils/utils.dart';
+import '../../../../core/utils/workers.dart';
 
 /// What every management screen shares: the API, the session and writes that
 /// report their outcome.
-abstract class ManageController extends GetxController {
+abstract class ManageController extends GetxController with DisposesWorkers {
   final api = VendorManageApi(Get.find<VendorApi>().client);
   final session = Get.find<SessionService>();
 

@@ -1,14 +1,14 @@
-import 'dart:async';
-
 import 'package:get/get.dart';
 
 import '../../../../commons/models/dashboard_summary.dart';
 import '../../../../core/data/vendor_api.dart';
 import '../../../../core/enums/enums.dart';
 import '../../../../core/services/session_service.dart';
+import '../../../../core/utils/poller.dart';
+import '../../../../core/utils/workers.dart';
 import '../../../main/presentation/controllers/main_controller.dart';
 
-class HomeController extends GetxController {
+class HomeController extends GetxController with DisposesWorkers {
   static const Duration pollEvery = Duration(seconds: 30);
 
   final _api = Get.find<VendorApi>();
@@ -22,7 +22,9 @@ class HomeController extends GetxController {
   /// The old numbers stay on screen, dimmed, while a new period loads.
   final refreshing = false.obs;
 
-  Timer? _poll;
+  /// Only while Home is the open tab and the app is in the foreground (GAP-099).
+  /// Coming back from the background reloads through `orderChanges`.
+  late final Poller _poll = Poller(pollEvery, load);
 
   // Only the newest request may fill the screen.
   int _requestId = 0;
@@ -31,21 +33,17 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     load();
-    _startPolling();
-    ever(session.branchId, (_) => _reload());
-    ever(session.orderChanges, (_) => load());
-    ever(Get.find<MainController>().selectedIndex, (index) {
-      _poll?.cancel();
+    _poll.start();
+    keep(ever(session.branchId, (_) => _reload()));
+    keep(ever(session.orderChanges, (_) => load()));
+    keep(ever(Get.find<MainController>().selectedIndex, (index) {
       if (index == MainController.homeTab) {
         load();
-        _startPolling();
+        _poll.start();
+      } else {
+        _poll.stop();
       }
-    });
-  }
-
-  void _startPolling() {
-    _poll?.cancel();
-    _poll = Timer.periodic(pollEvery, (_) => load());
+    }));
   }
 
   void selectPeriod(DashboardPeriod value) {
@@ -75,7 +73,7 @@ class HomeController extends GetxController {
 
   @override
   void onClose() {
-    _poll?.cancel();
+    _poll.dispose();
     super.onClose();
   }
 }

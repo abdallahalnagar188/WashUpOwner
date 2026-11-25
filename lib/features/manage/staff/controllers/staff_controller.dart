@@ -35,7 +35,7 @@ class StaffController extends LoadController<StaffList> {
   void onInit() {
     super.onInit();
     load();
-    ever(session.branchId, (_) => load());
+    keep(ever(session.branchId, (_) => load()));
   }
 
   @override

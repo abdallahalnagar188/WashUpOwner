@@ -13,7 +13,7 @@ class OffersController extends LoadController<OfferList> {
   void onInit() {
     super.onInit();
     load();
-    ever(session.branchId, (_) => load());
+    keep(ever(session.branchId, (_) => load()));
   }
 
   /// All offers at once, as the dashboard does; the chips filter them here.

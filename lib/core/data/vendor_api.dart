@@ -168,7 +168,8 @@ class VendorApi {
   }
 
   Future<int> unreadNotifications() async {
-    final reply = await _client.getRaw('/vendor/notifications', query: {'page': 1});
+    // One row is enough: the count is in `meta` (GAP-099).
+    final reply = await _client.getRaw('/vendor/notifications', query: {'page': 1, 'per_page': 1});
     return ((reply['meta'] as Map?)?['unread'] as num?)?.toInt() ?? 0;
   }
 }

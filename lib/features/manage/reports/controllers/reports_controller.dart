@@ -32,7 +32,7 @@ class ReportsController extends LoadController<VendorReport> {
   void onInit() {
     super.onInit();
     load();
-    ever(session.branchId, (_) => load());
+    keep(ever(session.branchId, (_) => load()));
   }
 
   @override

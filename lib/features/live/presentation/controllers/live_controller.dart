@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:get/get.dart';
 
 import '../../../../commons/models/live_board.dart';
@@ -9,12 +7,15 @@ import '../../../../core/data/vendor_api.dart';
 import '../../../../core/enums/enums.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/session_service.dart';
+import '../../../../core/utils/poller.dart';
 import '../../../../core/utils/utils.dart';
+import '../../../../core/utils/workers.dart';
 import '../../../main/presentation/controllers/main_controller.dart';
 
-class LiveController extends GetxController {
-  /// Same pace as the dashboard's live page.
-  static const Duration pollEvery = Duration(seconds: 15);
+class LiveController extends GetxController with DisposesWorkers {
+  /// The partner-app pace in VENDOR_API.md (30 s, foreground only); push covers
+  /// the rest (GAP-099).
+  static const Duration pollEvery = Duration(seconds: 30);
 
   final _api = Get.find<VendorApi>();
   final _session = Get.find<SessionService>();
@@ -24,7 +25,7 @@ class LiveController extends GetxController {
   final column = LiveColumn.waiting.obs;
   final busyOrderId = RxnString();
 
-  Timer? _poll;
+  late final Poller _poll = Poller(pollEvery, load);
   bool _columnChosen = false;
 
   // Only the newest request may fill the screen.
@@ -35,22 +36,23 @@ class LiveController extends GetxController {
     super.onInit();
     final main = Get.find<MainController>();
     _setPolling(main.selectedIndex.value == MainController.liveTab);
-    ever(_session.branchId, (_) {
+    keep(ever(_session.branchId, (_) {
       board.value = null;
       load();
-    });
-    ever(_session.orderChanges, (_) => load());
-    ever(main.selectedIndex, (index) {
+    }));
+    keep(ever(_session.orderChanges, (_) => load()));
+    keep(ever(main.selectedIndex, (index) {
       _setPolling(index == MainController.liveTab);
-    });
+    }));
   }
 
   void _setPolling(bool on) {
-    _poll?.cancel();
-    _poll = null;
-    if (!on) return;
+    if (!on) {
+      _poll.stop();
+      return;
+    }
     load();
-    _poll = Timer.periodic(pollEvery, (_) => load());
+    _poll.start();
   }
 
   void selectColumn(LiveColumn value) {
@@ -135,7 +137,7 @@ class LiveController extends GetxController {
 
   @override
   void onClose() {
-    _poll?.cancel();
+    _poll.dispose();
     super.onClose();
   }
 }
