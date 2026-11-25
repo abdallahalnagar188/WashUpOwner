@@ -6,6 +6,8 @@ import 'package:get/get.dart';
 import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../core/enums/enums.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
+import '../../../../core/constance/app_colors.dart';
+import '../../../../core/services/session_service.dart';
 import '../../../../core/utils/system_ui.dart';
 import '../../../main/presentation/controllers/main_controller.dart';
 import '../controllers/home_controller.dart';
@@ -54,6 +56,7 @@ class HomePage extends GetView<HomeController> {
                     padding: EdgeInsets.only(top: 14.h, bottom: 120.h),
                     child: Column(
                       children: [
+                        const _SuspendedBanner(),
                         _enter(0, KpiGrid(summary: summary)),
                         _enter(1, SectionHeader(title: 'home.attention'.tr)),
                         _enter(1, AlertsSection(alerts: summary.alerts)),
@@ -89,5 +92,42 @@ class HomePage extends GetView<HomeController> {
         ),
       ),
     );
+  }
+}
+
+/// GAP-014: a suspended wash learns it here, with the platform's reason, instead of from a
+/// failing action. Hidden for active businesses.
+class _SuspendedBanner extends StatelessWidget {
+  const _SuspendedBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final account = Get.find<SessionService>().account.value;
+      if (account == null || account.businessStatus != 'suspended') return const SizedBox.shrink();
+      final reason = account.businessStatusReason?.trim() ?? '';
+      final text = Theme.of(context).textTheme;
+      return Container(
+        width: double.infinity,
+        margin: EdgeInsets.fromLTRB(20.w, 0, 20.w, 14.h),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: AppColors.danger.withValues(alpha: 0.08),
+          border: Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
+          borderRadius: BorderRadius.circular(14.r),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('home.suspendedTitle'.tr, style: text.titleSmall?.copyWith(color: AppColors.danger)),
+            SizedBox(height: 4.h),
+            Text(
+              reason.isEmpty ? 'home.suspendedBody'.tr : 'home.suspendedReason'.trParams({'reason': reason}),
+              style: text.bodySmall,
+            ),
+          ],
+        ),
+      );
+    });
   }
 }

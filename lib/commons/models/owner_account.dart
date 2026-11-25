@@ -51,6 +51,9 @@ class OwnerAccount {
   final String businessId;
   final LocalizedText businessName;
   final String businessStatus;
+
+  /// Why the platform suspended the wash (shown on Home), when it did.
+  final String? businessStatusReason;
   final String? homeBranchId;
   final List<OwnerBranch> branches;
   final Map<String, bool> permissions;
@@ -65,6 +68,7 @@ class OwnerAccount {
     required this.businessId,
     required this.businessName,
     required this.businessStatus,
+    this.businessStatusReason,
     required this.homeBranchId,
     required this.branches,
     required this.permissions,
@@ -83,6 +87,7 @@ class OwnerAccount {
         businessId: json['businessId']?.toString() ?? '',
         businessName: LocalizedText.fromJson(json['businessName']),
         businessStatus: json['businessStatus']?.toString() ?? '',
+        businessStatusReason: json['businessStatusReason']?.toString(),
         homeBranchId: json['homeBranchId'] as String?,
         branches: (json['branches'] as List? ?? const [])
             .map((b) => OwnerBranch.fromJson(b as Map<String, dynamic>))

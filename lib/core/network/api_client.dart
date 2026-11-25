@@ -126,7 +126,11 @@ class ApiClient {
             throw _toApiException(retryError);
           }
         }
-        throw ApiException('error.session'.tr, statusCode: 401);
+        // GAP-068: only a refused refresh ends the session. When the refresh itself could not
+        // reach the server (offline, 5xx, 429) the saved session is kept and this is a network error,
+        // so the splash offers "retry" instead of sending the user to Login.
+        if (_refreshEndedSession) throw ApiException('error.session'.tr, statusCode: 401);
+        throw ApiException('error.offline'.tr);
       }
       throw _toApiException(error);
     }
@@ -163,10 +167,20 @@ class ApiClient {
   /// because the server may retire a refresh token once it is used.
   Future<String?> _refresh() => _refreshing ??= _runRefresh().whenComplete(() => _refreshing = null);
 
+  /// Whether the last refresh failed because the server refused the session (true) or because it
+  /// could not be reached (false).
+  bool _refreshEndedSession = false;
+
+  void _endSession() {
+    _refreshEndedSession = true;
+    onSessionExpired?.call();
+  }
+
   Future<String?> _runRefresh() async {
+    _refreshEndedSession = false;
     final refreshToken = await _tokens.refreshToken();
     if (refreshToken == null) {
-      onSessionExpired?.call();
+      _endSession();
       return null;
     }
     try {
@@ -180,10 +194,10 @@ class ApiClient {
     } on DioException catch (error) {
       // Only a refusal ends the session; offline, 429 or a server error keep it.
       final status = error.response?.statusCode;
-      if (status == 401 || status == 403) onSessionExpired?.call();
+      if (status == 401 || status == 403) _endSession();
       return null;
     } on ApiException {
-      onSessionExpired?.call();
+      _endSession();
       return null;
     }
   }
