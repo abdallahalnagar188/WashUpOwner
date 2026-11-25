@@ -117,6 +117,18 @@ class SessionService extends GetxService {
     branchId.value = allBranches;
   }
 
+  /// Reads `auth/me` again after an edit that changes the account (branch
+  /// names and active flags, business name, manager rights), so pickers and
+  /// forms stop showing the old values until a restart (GAP-083). A failure
+  /// keeps what is on screen.
+  Future<void> refreshAccount() async {
+    if (account.value == null) return;
+    try {
+      final me = await _api.me();
+      if (!_isEmployee(me) && account.value != null) _setAccount(me);
+    } catch (_) {}
+  }
+
   void selectBranch(String id) {
     branchId.value = id;
     CacheController().setter(key: CacheKeys.selectedBranch, value: id);

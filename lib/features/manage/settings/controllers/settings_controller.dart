@@ -26,13 +26,19 @@ class SettingsController extends LoadController<BusinessSettings> {
           email: email,
           reason: reason,
         ),
-        reload: () => load(silent: true),
+        reload: _reloadAll,
       );
 
   Future<bool> saveManagerEdits(bool value, String reason) => write(
         () => api.saveManagerCanEditServices(value, reason: reason),
-        reload: () => load(silent: true),
+        reload: _reloadAll,
       );
+
+  /// The business name and manager rights also live in the session account (GAP-083).
+  Future<void> _reloadAll() async {
+    await load(silent: true);
+    await session.refreshAccount();
+  }
 
   Future<bool> savePrefs(Map<String, bool> prefs, String reason) => write(
         () => api.saveNotificationPrefs(prefs, reason: reason),

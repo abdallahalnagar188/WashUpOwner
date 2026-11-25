@@ -45,11 +45,17 @@ class BranchesController extends LoadController<List<ManagedBranch>> {
           active: active,
           reason: reason,
         ),
-        reload: () => load(silent: true),
+        reload: _reloadAll,
       );
 
   Future<bool> updateRules(ManagedBranch branch, BranchRules rules, String reason) => write(
         () => api.updateBranchRules(branch.id, rules: rules, reason: reason),
-        reload: () => load(silent: true),
+        reload: _reloadAll,
       );
+
+  /// The list here and the branches every other screen reads from the session (GAP-083).
+  Future<void> _reloadAll() async {
+    await load(silent: true);
+    await session.refreshAccount();
+  }
 }
