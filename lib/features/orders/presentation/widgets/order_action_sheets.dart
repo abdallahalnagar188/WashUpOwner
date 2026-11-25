@@ -10,6 +10,7 @@ import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../commons/widgets/sheets/app_sheet.dart';
 import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
+import '../../../../core/helpers/form_rules.dart';
 import '../../../../core/helpers/format_helper.dart';
 import '../../../../core/utils/utils.dart';
 import '../controllers/order_details_controller.dart';
@@ -137,13 +138,23 @@ Future<void> startOrderAction(
       );
       if (fields != null) await controller.run(action, fields);
     case OrderAction.note:
-      final value = await showAppSheet<String>(context, _TextSheet(title: 'action.note'.tr));
+      final value = await showAppSheet<String>(
+        context,
+        _TextSheet(title: 'action.note'.tr, isValid: (text) => FormRules.validReason(text, min: FormRules.noteMin)),
+      );
       if (value != null) await controller.run(action, {'text': value});
     case OrderAction.cancel:
     case OrderAction.refund:
+      // Same minimums as the server (GAP-080); a cancel reason must read as a sentence.
       final value = await showAppSheet<String>(
         context,
-        _TextSheet(title: 'action.${action.key}'.tr, hint: 'sheet.reason'.tr, danger: true),
+        _TextSheet(
+          title: 'action.${action.key}'.tr,
+          hint: 'sheet.reason'.tr,
+          danger: true,
+          isValid: action == OrderAction.cancel ? FormRules.validCancelReason : FormRules.validReason,
+          invalidHint: action == OrderAction.cancel ? 'sheet.reasonSentence'.tr : null,
+        ),
       );
       if (value != null) await controller.run(action, {'reason': value});
   }
@@ -203,7 +214,8 @@ class _CollectSheet extends StatefulWidget {
 }
 
 class _CollectSheetState extends State<_CollectSheet> {
-  static const List<String> _methods = ['cash', 'card', 'online'];
+  // GAP-043: the server takes cash or card only; "online" was refused with a 422.
+  static const List<String> _methods = FormRules.paymentMethods;
 
   String _method = 'cash';
   late final TextEditingController _received =
@@ -294,25 +306,30 @@ class _DiscountSheetState extends State<_DiscountSheet> {
 
   num? get _number => num.tryParse(_value.text);
 
+  /// The discount as the server will compute it: on the subtotal, not the
+  /// total after an offer (GAP-082).
+  DiscountPreview? get _preview => _number == null
+      ? null
+      : DiscountPreview.of(type: _type, value: _number!, subtotal: widget.order.subtotal);
+
   /// Null when the value is usable, otherwise why it is not.
   String? get _problem {
-    final value = _number;
-    if (value == null || value <= 0) return null;
-    final total = widget.order.total;
-    final pct = _type == 'percent' ? value : (total == 0 ? 0 : value / total * 100);
-    if (pct > widget.order.maxDiscountPct) {
+    final preview = _preview;
+    if (preview == null) return null;
+    if (_type == 'percent' && preview.pct > 100) return 'sheet.maxPercent'.tr;
+    if (preview.pct > widget.order.maxDiscountPct) {
       return 'sheet.maxDiscount'.trParams({'pct': FormatHelper.number(widget.order.maxDiscountPct)});
     }
     return null;
   }
 
-  bool get _valid =>
-      (_number ?? 0) > 0 && _problem == null && _reason.text.trim().length >= 3;
+  bool get _valid => _preview != null && _problem == null && FormRules.validReason(_reason.text);
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final problem = _problem;
+    final preview = _preview;
     return AppSheetBody(
       title: 'action.discount'.tr,
       children: [
@@ -343,6 +360,14 @@ class _DiscountSheetState extends State<_DiscountSheet> {
         if (problem != null) ...[
           6.height,
           Text(problem, style: text.bodySmall?.copyWith(color: AppColors.danger)),
+        ] else if (preview != null) ...[
+          6.height,
+          Text(
+            'sheet.discountAmount'.trParams({
+              'amount': FormatHelper.money(preview.amount, locale: widget.order.locale),
+            }),
+            style: text.bodySmall?.copyWith(color: AppColors.ink500),
+          ),
         ],
         12.height,
         AppTextField(dense: true, 
@@ -448,8 +473,18 @@ class _TextSheet extends StatefulWidget {
   final String title;
   final String? hint;
   final bool danger;
+  final bool Function(String text) isValid;
 
-  const _TextSheet({required this.title, this.hint, this.danger = false});
+  /// Shown under the field when the text is long enough but still refused.
+  final String? invalidHint;
+
+  const _TextSheet({
+    required this.title,
+    this.hint,
+    this.danger = false,
+    required this.isValid,
+    this.invalidHint,
+  });
 
   @override
   State<_TextSheet> createState() => _TextSheetState();
@@ -466,22 +501,31 @@ class _TextSheetState extends State<_TextSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final valid = _input.text.trim().length >= 2;
+    final value = _input.text.trim();
+    final valid = widget.isValid(value);
+    final showHint = !valid && widget.invalidHint != null && FormRules.looksLikeCode(value);
     return AppSheetBody(
       title: widget.title,
       children: [
-        AppTextField(dense: true, 
+        AppTextField(dense: true,
           controller: _input,
           label: widget.hint,
           maxLines: 3,
           autofocus: true,
           onChanged: (_) => setState(() {}),
         ),
+        if (showHint) ...[
+          6.height,
+          Text(
+            widget.invalidHint!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.danger),
+          ),
+        ],
         18.height,
         AppButton(
           title: widget.title,
           variant: widget.danger ? AppButtonVariant.danger : AppButtonVariant.primary,
-          onTap: valid ? () => Navigator.of(context).pop(_input.text.trim()) : null,
+          onTap: valid ? () => Navigator.of(context).pop(value) : null,
         ),
       ],
     );

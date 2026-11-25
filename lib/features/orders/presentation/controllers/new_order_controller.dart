@@ -7,6 +7,7 @@ import '../../../../commons/models/branch_locale.dart';
 import '../../../../commons/models/service_item.dart';
 import '../../../../core/data/vendor_api.dart';
 import '../../../../core/enums/enums.dart';
+import '../../../../core/helpers/form_rules.dart';
 import '../../../../core/helpers/phone_helper.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/session_service.dart';
@@ -208,7 +209,8 @@ class NewOrderController extends GetxController {
   /// The first problem with the form, or null when it can be submitted.
   String? get _problem {
     if (branchId.value == null) return 'newOrder.chooseBranch'.tr;
-    if (plate.text.trim().length < 2) return 'newOrder.needPlate'.tr;
+    // The server counts the plate without spaces or dashes and wants 3 characters (GAP-080).
+    if (!FormRules.validPlate(_plate)) return 'newOrder.needPlate'.tr;
     if (phone.text.trim().isEmpty) return 'newOrder.needPhone'.tr;
     if (_phone == null) return 'newOrder.badPhone'.trParams({'example': country.value.exampleLtr});
     if (_selectedPrimary.length != 1) return 'newOrder.needService'.tr;

@@ -174,6 +174,26 @@ class AddonOption {
       );
 }
 
+/// What a manual discount comes to under the server's rule (`parseDiscountValue`,
+/// GAP-082): a percent is of the subtotal (before offers) and rounds to whole
+/// units; a fixed amount is capped at the subtotal.
+class DiscountPreview {
+  final num pct;
+  final num amount;
+
+  const DiscountPreview({required this.pct, required this.amount});
+
+  /// Null for an empty or non-positive value.
+  static DiscountPreview? of({required String type, required num value, required num subtotal}) {
+    if (value <= 0) return null;
+    if (type == 'fixed') {
+      final capped = value < subtotal ? value : subtotal;
+      return DiscountPreview(pct: subtotal > 0 ? capped / subtotal * 100 : 0, amount: capped);
+    }
+    return DiscountPreview(pct: value, amount: (subtotal * value / 100).round());
+  }
+}
+
 /// Everything `GET /vendor/orders/:id` returns that the app shows.
 class OrderDetails {
   final String id;

@@ -7,6 +7,7 @@ import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../commons/widgets/sheets/app_sheet.dart';
 import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
+import '../../../../core/helpers/form_rules.dart';
 
 /// A bottom sheet that rises above the keyboard and scrolls when it is long.
 Future<T?> showManageSheet<T>(BuildContext context, Widget child) => showAppSheet<T>(context, child);
@@ -121,6 +122,7 @@ Future<void> showReasonSheet(
   List<String> presets = const [],
   bool danger = false,
   bool optional = false,
+  int minLength = FormRules.reasonMin,
   required Future<bool> Function(String reason) onSubmit,
 }) =>
     showManageSheet<void>(
@@ -132,6 +134,7 @@ Future<void> showReasonSheet(
         presets: presets,
         danger: danger,
         optional: optional,
+        minLength: minLength,
         onSubmit: onSubmit,
       ),
     );
@@ -143,6 +146,9 @@ class ReasonSheet extends StatefulWidget {
   final List<String> presets;
   final bool danger;
   final bool optional;
+
+  /// The server minimum for this reason (GAP-080): 3 for most, 5 for a review report.
+  final int minLength;
   final Future<bool> Function(String reason) onSubmit;
 
   const ReasonSheet({
@@ -153,6 +159,7 @@ class ReasonSheet extends StatefulWidget {
     this.presets = const [],
     this.danger = false,
     this.optional = false,
+    this.minLength = FormRules.reasonMin,
     required this.onSubmit,
   });
 
@@ -171,7 +178,7 @@ class _ReasonSheetState extends State<ReasonSheet> {
 
   String get _text => _reason.text.trim();
 
-  bool get _valid => widget.optional || _text.length >= 3;
+  bool get _valid => widget.optional || _text.length >= widget.minLength;
 
   @override
   Widget build(BuildContext context) {

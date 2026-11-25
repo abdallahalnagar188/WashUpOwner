@@ -10,6 +10,7 @@ import '../../../../commons/widgets/effects/animated_number.dart';
 import '../../../../commons/widgets/layout/branch_picker.dart';
 import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
+import '../../../../core/helpers/form_rules.dart';
 import '../../../../core/helpers/format_helper.dart';
 import '../../common/widgets/manage_cards.dart';
 import '../../common/widgets/manage_page.dart';
@@ -44,6 +45,7 @@ class ReviewsPage extends GetView<ReviewsController> {
       body: 'reviews.reportBody'.tr,
       okText: 'reviews.reportSend'.tr,
       danger: true,
+      minLength: FormRules.reviewTextMin,
       presets: [
         'reviews.preset.notVisited'.tr,
         'reviews.preset.abusive'.tr,
