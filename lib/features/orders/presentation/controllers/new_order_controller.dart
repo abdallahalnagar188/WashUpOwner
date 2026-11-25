@@ -51,6 +51,10 @@ class NewOrderController extends GetxController {
   final selected = <String>{}.obs;
   final loadingServices = true.obs;
   final total = RxnNum();
+
+  /// The server could not price the selection; no local guess is shown.
+  final priceUnavailable = false.obs;
+  int _priceRequest = 0;
   final day = DateTime.now().obs;
   final slots = <DateTime>[].obs;
   final slot = Rxn<DateTime>();
@@ -87,7 +91,9 @@ class NewOrderController extends GetxController {
     branchId.value = id;
     _syncCountry();
     selected.clear();
+    _priceRequest++;
     total.value = null;
+    priceUnavailable.value = false;
     slots.clear();
     slot.value = null;
     _loadServices();
@@ -152,16 +158,23 @@ class NewOrderController extends GetxController {
 
   Future<void> _loadPrice() async {
     final branch = branchId.value;
+    final id = ++_priceRequest;
+    priceUnavailable.value = false;
     if (branch == null || selected.isEmpty) {
       total.value = null;
       return;
     }
     try {
-      total.value = await _api.pricePreview(branchId: branch, serviceIds: selected.toList());
+      final value = await _api.pricePreview(branchId: branch, serviceIds: selected.toList());
+      if (id != _priceRequest) return;
+      total.value = value;
+      priceUnavailable.value = value == null;
     } catch (_) {
-      total.value = services
-          .where((s) => selected.contains(s.id))
-          .fold<num>(0, (sum, s) => sum + s.price);
+      if (id != _priceRequest) return;
+      // GAP-034: a local sum of list prices ignores offers and would differ from
+      // what the server charges, so the price is shown as unavailable instead.
+      total.value = null;
+      priceUnavailable.value = true;
     }
   }
 
@@ -229,7 +242,7 @@ class NewOrderController extends GetxController {
     country.value = _parsedPhone!.country;
     submitting.value = true;
     try {
-      final id = await _api.createOrder(
+      final created = await _api.createOrder(
         branchId: branchId.value!,
         source: source.value,
         plate: _plate,
@@ -240,8 +253,9 @@ class NewOrderController extends GetxController {
         notes: notes.text.trim(),
       );
       session.notifyOrderChanged();
-      Get.offNamed(Routes.orderRoute, arguments: id);
-      Utils.getSnakBar(message: 'newOrder.created'.tr, type: TosterTypes.sucsses);
+      Get.offNamed(Routes.orderRoute, arguments: created.id);
+      // The server adds the expected wait when every bay is busy (GAP-081).
+      Utils.getSnakBar(message: created.message ?? 'newOrder.created'.tr, type: TosterTypes.sucsses);
     } catch (e) {
       Utils.getSnakBar(message: e.toString(), type: TosterTypes.failed);
     } finally {

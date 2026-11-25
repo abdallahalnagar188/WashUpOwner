@@ -23,10 +23,26 @@ abstract class ManageController extends GetxController {
     Future<void> Function() call, {
     Future<void> Function()? reload,
     String? doneText,
+  }) =>
+      writeReporting(
+        () async {
+          await call();
+          return null;
+        },
+        reload: reload,
+        doneText: doneText,
+      );
+
+  /// Like [write], for calls that return the server's outcome text, which is
+  /// shown instead of the generic one (GAP-081).
+  Future<bool> writeReporting(
+    Future<String?> Function() call, {
+    Future<void> Function()? reload,
+    String? doneText,
   }) async {
     try {
-      await call();
-      Utils.getSnakBar(message: doneText ?? 'manage.saved'.tr, type: TosterTypes.sucsses);
+      final outcome = await call();
+      Utils.getSnakBar(message: outcome ?? doneText ?? 'manage.saved'.tr, type: TosterTypes.sucsses);
       await reload?.call();
       return true;
     } catch (e) {

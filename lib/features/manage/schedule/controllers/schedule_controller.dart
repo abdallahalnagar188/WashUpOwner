@@ -33,7 +33,7 @@ class ScheduleController extends LoadController<ScheduleDay> {
     load();
   }
 
-  Future<bool> block({required String start, required String end, required String reason}) => write(
+  Future<bool> block({required String start, required String end, required String reason}) => writeReporting(
         () => api.blockSlot(branchId: branchId.value, start: start, end: end, reason: reason),
         reload: () => load(silent: true),
       );

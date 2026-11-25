@@ -163,6 +163,14 @@ class NewOrderPage extends GetView<NewOrderController> {
                     if (controller.total.value != null) ...[
                       Text(FormatHelper.money(controller.total.value!, locale: controller.locale), style: text.titleLarge),
                       14.width,
+                    ] else if (controller.priceUnavailable.value) ...[
+                      Flexible(
+                        child: Text(
+                          'newOrder.priceUnavailable'.tr,
+                          style: text.bodySmall?.copyWith(color: AppColors.ink500),
+                        ),
+                      ),
+                      14.width,
                     ],
                     Expanded(
                       child: AppButton(

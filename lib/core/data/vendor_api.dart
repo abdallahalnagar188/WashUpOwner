@@ -78,8 +78,15 @@ class VendorApi {
   Future<OrderDetails> order(String id) async =>
       OrderDetails.fromJson(await _client.get('/vendor/orders/$id') as Map<String, dynamic>);
 
-  Future<void> runAction(String orderId, OrderAction action, [Map<String, dynamic> fields = const {}]) =>
-      _client.post('/vendor/orders/$orderId/actions', body: {'action': action.key, ...fields});
+  /// Returns the server's outcome text, like the change due after a cash payment.
+  Future<String?> runAction(String orderId, OrderAction action, [Map<String, dynamic> fields = const {}]) async =>
+      ApiClient.outcome(
+        await _client.postRaw('/vendor/orders/$orderId/actions', body: {'action': action.key, ...fields}),
+      );
+
+  /// Confirms several pending bookings at once. Returns the server's outcome text.
+  Future<String?> bulkConfirm(List<String> ids) async =>
+      ApiClient.outcome(await _client.postRaw('/vendor/orders/bulk-confirm', body: {'ids': ids}));
 
   Future<List<ServiceItem>> services({required String branchId}) async {
     final data = await _client.get('/vendor/services', query: {'branchId': branchId}) as List;
@@ -117,8 +124,9 @@ class VendorApi {
       await _client.get('/vendor/recognize', query: {'plate': plate, 'phone': phone})
           as Map<String, dynamic>?;
 
-  /// Returns the new order's id.
-  Future<String> createOrder({
+  /// Returns the new order's id and the server's outcome text (it adds the
+  /// expected wait when every bay is busy).
+  Future<({String id, String? message})> createOrder({
     required String branchId,
     required OrderSource source,
     required String plate,
@@ -128,7 +136,7 @@ class VendorApi {
     DateTime? scheduledAt,
     String? notes,
   }) async {
-    final data = await _client.post('/vendor/orders', body: {
+    final reply = await _client.postRaw('/vendor/orders', body: {
       'branchId': branchId,
       'source': source.key,
       'plate': plate,
@@ -137,8 +145,9 @@ class VendorApi {
       'serviceIds': serviceIds,
       if (scheduledAt != null) 'scheduledAt': scheduledAt.toUtc().toIso8601String(),
       if (notes != null && notes.isNotEmpty) 'notes': notes,
-    }) as Map<String, dynamic>;
-    return data['id'] as String;
+    });
+    final data = reply['data'] as Map<String, dynamic>;
+    return (id: data['id'] as String, message: ApiClient.outcome(reply));
   }
 
   Future<void> registerPush({required String token}) => _client.post('/vendor/push/register', body: {

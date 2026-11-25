@@ -42,18 +42,20 @@ class VendorManageApi {
         readMap(await _client.get('/vendor/schedule', query: {'branchId': branchId, 'date': date})),
       );
 
-  Future<void> blockSlot({
+  /// Returns the server's outcome text: it says when bookings already sit in
+  /// the blocked time (they are kept), which a generic "saved" would hide.
+  Future<String?> blockSlot({
     required String branchId,
     required String start,
     required String end,
     required String reason,
-  }) =>
-      _client.post('/vendor/schedule/blocks', body: {
+  }) async =>
+      ApiClient.outcome(await _client.postRaw('/vendor/schedule/blocks', body: {
         'branchId': branchId,
         'start': start,
         'end': end,
         'reason': reason,
-      });
+      }));
 
   Future<void> removeBlock(String id) => _client.delete('/vendor/schedule/blocks/$id');
 

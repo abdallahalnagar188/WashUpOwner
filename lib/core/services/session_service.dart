@@ -24,6 +24,9 @@ class SessionService extends GetxService {
   bool can(OwnerPermission? permission) =>
       permission == null || (account.value?.can(permission) ?? false);
 
+  /// The platform suspended the wash: it may finish the cars inside but take no new ones.
+  bool get suspended => account.value?.businessStatus == 'suspended';
+
   /// A concrete branch for forms that need one: the selected branch, else the
   /// account's home branch, else its first.
   String? get workingBranchId {

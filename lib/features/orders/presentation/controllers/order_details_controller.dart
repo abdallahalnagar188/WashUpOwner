@@ -25,23 +25,24 @@ class OrderDetailsController extends GetxController {
   Timer? _poll;
   int _requestId = 0;
 
-  /// What the server allows, minus what this account may not do.
+  /// What the server allows, minus what this account may not do. The server
+  /// list already applies the state machine, the no-show grace (only before
+  /// check-in) and suspended mode, so the app adds no rules of its own (GAP-074).
   List<OrderAction> get actions {
     final current = order.value;
     if (current == null) return const [];
-    return current.allowedActions
-        .where((a) => _session.can(a.permission))
-        // The server refuses a no-show before the customer is late enough.
-        .where((a) => a != OrderAction.noShow || current.noShowOpen)
-        .toList();
+    return current.allowedActions.where((a) => _session.can(a.permission)).toList();
   }
 
-  /// "No-show" exists but opens later: shown greyed with its time.
+  /// A confirmed booking whose no-show opens later: shown greyed with its
+  /// time. The server leaves `no_show` out of the list until the grace is over.
   bool get noShowLater {
     final current = order.value;
     return current != null &&
-        current.allowedActions.contains(OrderAction.noShow) &&
-        _session.can(OrderAction.noShow.permission) &&
+        current.status == OrderStatus.confirmed &&
+        !current.locked &&
+        !current.allowedActions.contains(OrderAction.noShow) &&
+        current.allowedActions.any((a) => a != OrderAction.note) &&
         !current.noShowOpen;
   }
 
@@ -82,10 +83,11 @@ class OrderDetailsController extends GetxController {
     if (busy.value) return false;
     busy.value = true;
     try {
-      await _api.runAction(orderId, action, fields);
+      final outcome = await _api.runAction(orderId, action, fields);
       await load();
       _session.notifyOrderChanged();
-      Utils.getSnakBar(message: 'action.done'.tr, type: TosterTypes.sucsses);
+      // The server's text carries what staff must act on, like the change due (GAP-081).
+      Utils.getSnakBar(message: outcome ?? 'action.done'.tr, type: TosterTypes.sucsses);
       return true;
     } catch (e) {
       Utils.getSnakBar(message: e.toString(), type: TosterTypes.failed);

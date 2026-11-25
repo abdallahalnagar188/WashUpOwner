@@ -12,7 +12,8 @@ enum OrderAction {
   complete('complete', OwnerPermission.runService),
   collectPayment('collect_payment', OwnerPermission.collectPayment),
   cancel('cancel', OwnerPermission.cancelOrder),
-  noShow('no_show', OwnerPermission.runService),
+  // The server offers a no-show to any role (allowedActions), so no permission hides it (GAP-074).
+  noShow('no_show', null),
   assign('assign', null),
   addService('add_service', null),
   discount('discount', null),
@@ -32,6 +33,10 @@ enum OrderAction {
   }
 }
 
+/// Known action keys of a server list; unknown ones are left out.
+List<OrderAction> parseActions(List keys) =>
+    keys.map((key) => OrderAction.fromKey(key?.toString())).whereType<OrderAction>().toList();
+
 /// A row in the orders lists and on the live board.
 class OrderSummary {
   final String id;
@@ -50,6 +55,10 @@ class OrderSummary {
   final OrderStatus status;
   final PaymentStatus paymentStatus;
   final OrderAction? nextAction;
+
+  /// The server's actions for this row, when the list sends them (GAP-074).
+  /// Null on servers that only send [nextAction].
+  final List<OrderAction>? allowedActions;
   final bool locked;
   final int overdueMin;
 
@@ -70,6 +79,7 @@ class OrderSummary {
     required this.status,
     required this.paymentStatus,
     this.nextAction,
+    this.allowedActions,
     this.locked = false,
     this.overdueMin = 0,
   });
@@ -91,6 +101,7 @@ class OrderSummary {
         status: OrderStatus.fromKey(json['status'] as String?),
         paymentStatus: PaymentStatus.fromKey(json['paymentStatus'] as String?),
         nextAction: OrderAction.fromKey(json['nextAction'] as String?),
+        allowedActions: json['allowedActions'] is List ? parseActions(json['allowedActions'] as List) : null,
         locked: json['locked'] == true,
         overdueMin: (json['overdueMin'] as num?)?.toInt() ?? 0,
       );
@@ -296,10 +307,7 @@ class OrderDetails {
           .map((entry) => OrderTimelineEntry.fromJson(entry as Map<String, dynamic>))
           .toList(),
       notes: (order['notes'] as List? ?? const []).map(OrderNote.fromJson).toList(),
-      allowedActions: (json['allowedActions'] as List? ?? const [])
-          .map((key) => OrderAction.fromKey(key as String?))
-          .whereType<OrderAction>()
-          .toList(),
+      allowedActions: parseActions(json['allowedActions'] as List? ?? const []),
       nextAction: OrderAction.fromKey(json['nextAction'] as String?),
       assignableStaff: (json['assignableStaff'] as List? ?? const [])
           .map((staff) => NamedRef.fromJson(staff as Map<String, dynamic>))

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../commons/models/live_board.dart';
 import '../../../../commons/models/order.dart';
+import '../../../../commons/models/owner_account.dart';
 import '../../../../core/data/vendor_api.dart';
 import '../../../../core/enums/enums.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -89,9 +90,26 @@ class LiveController extends GetxController {
 
   /// The card's button, for owners who skip the details. Steps that need an
   /// answer, like who does the job or how it was paid, open the order.
-  bool canRunNext(OrderSummary order) {
+  bool canRunNext(OrderSummary order) => nextStepAllowed(
+        order,
+        can: _session.can,
+        suspended: _session.suspended,
+      );
+
+  /// The server's `allowedActions` decide when the row carries them (GAP-074).
+  /// Rows from today's server only carry `nextAction`, which ignores suspended
+  /// mode, so the app applies that rule itself: a suspended wash takes no new
+  /// car (confirm / check-in answer 423).
+  static bool nextStepAllowed(
+    OrderSummary order, {
+    required bool Function(OwnerPermission?) can,
+    required bool suspended,
+  }) {
     final next = order.nextAction;
-    return next != null && !order.locked && _session.can(next.permission);
+    if (next == null || order.locked || !can(next.permission)) return false;
+    final allowed = order.allowedActions;
+    if (allowed != null) return allowed.contains(next);
+    return !(suspended && (next == OrderAction.confirm || next == OrderAction.checkIn));
   }
 
   Future<void> runNext(OrderSummary order) async {
@@ -105,9 +123,9 @@ class LiveController extends GetxController {
     }
     busyOrderId.value = order.id;
     try {
-      await _api.runAction(order.id, next);
+      final outcome = await _api.runAction(order.id, next);
       _session.notifyOrderChanged();
-      Utils.getSnakBar(message: 'action.done'.tr, type: TosterTypes.sucsses);
+      Utils.getSnakBar(message: outcome ?? 'action.done'.tr, type: TosterTypes.sucsses);
     } catch (e) {
       Utils.getSnakBar(message: e.toString(), type: TosterTypes.failed);
     } finally {

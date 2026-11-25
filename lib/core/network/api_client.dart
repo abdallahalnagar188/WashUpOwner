@@ -80,6 +80,14 @@ class ApiClient {
   /// The whole reply, for calls that put something outside `data`.
   Future<Map<String, dynamic>> postRaw(String path, {Object? body}) => _send('POST', path, body: body);
 
+  /// What the server said it did (change due, expected wait, bookings left in a
+  /// blocked slot…), or null when it only answered "OK" (GAP-081).
+  static String? outcome(Map<String, dynamic> reply) {
+    final text = reply['message']?.toString().trim();
+    if (text == null || text.isEmpty || text.toUpperCase() == 'OK') return null;
+    return text;
+  }
+
   /// The whole reply, for lists that carry `meta` with their `data`.
   Future<Map<String, dynamic>> getRaw(String path, {Map<String, dynamic>? query}) =>
       _send('GET', path, query: query);
