@@ -256,6 +256,11 @@ class NotificationService extends GetxService {
     _registeredToken = null;
     _registeredAt = null;
     try {
+      // deleteToken is deprecated in favour of unregister(), which belongs to the newer
+      // installation-ID (FID) direct-send model. This app registers FCM *tokens* (getToken), and
+      // deleting that token is what makes the server's next send fail as UNREGISTERED. Switch only
+      // together with a move to FID registration.
+      // ignore: deprecated_member_use
       await FirebaseMessaging.instance.deleteToken().timeout(const Duration(seconds: 6));
     } catch (e) {
       dev.log('[Notifications] deleteToken failed: $e');

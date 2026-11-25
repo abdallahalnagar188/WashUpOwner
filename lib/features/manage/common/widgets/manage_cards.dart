@@ -149,18 +149,23 @@ class SectionCard extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
       child: RoundedContainer(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium)),
-                if (action != null) action!,
-              ],
-            ),
-            10.height,
-            ...children,
-          ],
+        // Tiles (ListTile / SwitchListTile) paint their ink on the nearest Material; without one
+        // inside this coloured card the splash is hidden and Flutter asserts in debug.
+        child: Material(
+          type: MaterialType.transparency,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium)),
+                  if (action != null) action!,
+                ],
+              ),
+              10.height,
+              ...children,
+            ],
+          ),
         ),
       ),
     );
