@@ -49,11 +49,22 @@ android {
 
     buildTypes {
         release {
-            // Falls back to the debug keys on a machine without key.properties.
-            signingConfig = signingConfigs.getByName(
-                if (keystoreProperties.isEmpty) "debug" else "release"
-            )
+            // GAP-056: never the debug keys. A debug-signed release could be shipped by
+            // mistake and every later store update would then fail on the signature.
+            signingConfig = signingConfigs.getByName("release")
         }
+    }
+}
+
+// Release tasks stop with a clear message when the upload key is missing; debug
+// and profile builds are not affected.
+gradle.taskGraph.whenReady {
+    val releaseTasks = allTasks.filter { it.project == project && it.name.contains("Release") }
+    if (releaseTasks.isNotEmpty() && keystoreProperties.isEmpty) {
+        throw GradleException(
+            "android/key.properties is missing: release builds must be signed with the upload key " +
+                "(keyAlias, keyPassword, storeFile, storePassword). See GAP-056."
+        )
     }
 }
 
