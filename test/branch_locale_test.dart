@@ -38,6 +38,24 @@ void main() {
     expect(FormatHelper.time(DateTime.utc(2026, 7, 1, 8), locale: cairo), '11:00 AM');
   });
 
+  test('Egypt changes its clocks at local midnight, not UTC midnight (GAP-069)', () {
+    // 2026: summer time from Friday 24 April 00:00 (= Thursday 22:00 UTC).
+    expect(cairo.offsetAt(DateTime.utc(2026, 4, 23, 21, 59)), const Duration(hours: 2));
+    expect(cairo.offsetAt(DateTime.utc(2026, 4, 23, 22, 0)), const Duration(hours: 3));
+    // Back to winter time at the end of Thursday 29 October (= 21:00 UTC).
+    expect(cairo.offsetAt(DateTime.utc(2026, 10, 29, 20, 59)), const Duration(hours: 3));
+    expect(cairo.offsetAt(DateTime.utc(2026, 10, 29, 21, 0)), const Duration(hours: 2));
+  });
+
+  test('today is the branch day, not the phone day (GAP-069)', () {
+    // 22:30 UTC on 3 November is already 4 November in Dubai and 00:30 in Cairo.
+    final at = DateTime.utc(2026, 11, 3, 22, 30);
+    expect(dubai.today(at), DateTime(2026, 11, 4));
+    expect(cairo.today(at), DateTime(2026, 11, 4));
+    expect(kuwait.today(DateTime.utc(2026, 11, 3, 20, 59)), DateTime(2026, 11, 3));
+    expect(BranchLocale.todayOf(dubai, at), DateTime(2026, 11, 4));
+  });
+
   test('a time picked on the phone is shown as it is', () {
     expect(FormatHelper.time(DateTime(2026, 11, 3, 9, 30), locale: dubai), '9:30 AM');
   });

@@ -18,7 +18,7 @@ class DayClosingPage extends GetView<DayClosingController> {
   const DayClosingPage({super.key});
 
   Future<void> _pickDate(BuildContext context) async {
-    final today = DateUtils.dateOnly(DateTime.now());
+    final today = controller.today;
     final picked = await showDatePicker(
       context: context,
       initialDate: controller.date.value,

@@ -234,7 +234,7 @@ class _SlotPicker extends GetView<NewOrderController> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final today = DateTime.now();
+    final today = controller.today;
     final days = [for (var i = 0; i < 7; i++) today.add(Duration(days: i))];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

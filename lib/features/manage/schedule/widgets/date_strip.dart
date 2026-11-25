@@ -14,7 +14,10 @@ class DateStrip extends StatefulWidget {
   final DateTime selected;
   final ValueChanged<DateTime> onSelect;
 
-  const DateStrip({super.key, required this.selected, required this.onSelect});
+  /// The branch's today (GAP-069); the phone's when not given.
+  final DateTime? today;
+
+  const DateStrip({super.key, required this.selected, required this.onSelect, this.today});
 
   @override
   State<DateStrip> createState() => _DateStripState();
@@ -24,7 +27,7 @@ class _DateStripState extends State<DateStrip> {
   static const double _itemWidth = 56;
   static const double _gap = 8;
 
-  final DateTime _today = DateUtils.dateOnly(DateTime.now());
+  late final DateTime _today = DateUtils.dateOnly(widget.today ?? DateTime.now());
   late final ScrollController _scroll = ScrollController(
     initialScrollOffset: (DateStrip.daysBefore * (_itemWidth + _gap)).w,
   );

@@ -36,7 +36,7 @@ class SchedulePage extends GetView<ScheduleController> {
   }
 
   Future<void> _pickDate(BuildContext context) async {
-    final today = DateUtils.dateOnly(DateTime.now());
+    final today = controller.today;
     final picked = await showDatePicker(
       context: context,
       initialDate: controller.date.value,
@@ -63,7 +63,7 @@ class SchedulePage extends GetView<ScheduleController> {
                 onSelect: controller.selectBranch,
               ),
             ),
-          Obx(() => DateStrip(selected: controller.date.value, onSelect: controller.selectDate)),
+          Obx(() => DateStrip(selected: controller.date.value, today: controller.today, onSelect: controller.selectDate)),
           Expanded(
             child: Obx(
               () => manageLoader(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../commons/models/branch_locale.dart';
 import '../../../../commons/models/schedule_day.dart';
 import '../../common/controllers/manage_controller.dart';
 import '../../common/widgets/manage_cards.dart';
@@ -8,7 +9,10 @@ import '../../common/widgets/manage_cards.dart';
 class ScheduleController extends LoadController<ScheduleDay> {
   /// The grid shows one branch, so "all branches" narrows to a real one.
   late final branchId = (session.workingBranchId ?? '').obs;
-  final date = DateUtils.dateOnly(DateTime.now()).obs;
+  /// The branch's day, not the phone's (GAP-069).
+  late final date = today.obs;
+
+  DateTime get today => BranchLocale.todayOf(session.localeOf(branchId.value));
 
   @override
   void onInit() {

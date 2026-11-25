@@ -56,6 +56,9 @@ class NewOrderController extends GetxController {
   final priceUnavailable = false.obs;
   int _priceRequest = 0;
   final day = DateTime.now().obs;
+
+  /// The chosen branch's calendar day, not the phone's (GAP-069).
+  DateTime get today => BranchLocale.todayOf(locale);
   final slots = <DateTime>[].obs;
   final slot = Rxn<DateTime>();
   final loadingSlots = false.obs;
@@ -70,6 +73,7 @@ class NewOrderController extends GetxController {
   void onInit() {
     super.onInit();
     branchId.value = session.workingBranchId;
+    day.value = today;
     _syncCountry();
     _loadServices();
     plate.addListener(_scheduleRecognize);

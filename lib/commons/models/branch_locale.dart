@@ -48,16 +48,38 @@ class BranchLocale {
       return DateTime.utc(d.year, month, day);
     }
 
-    final bool summer;
+    // The clocks change at local midnight, not UTC midnight (GAP-069): a switch
+    // to summer time happens at 00:00 UTC+2, the switch back at 00:00 UTC+3.
+    const winter = Duration(hours: 2);
+    const summerOffset = Duration(hours: 3);
+    final DateTime start;
+    final DateTime end;
     if (timezone == 'Asia/Beirut' || timezone == 'Asia/Hebron' || timezone == 'Asia/Gaza') {
       // Last Sunday of March to the last Sunday of October.
-      summer = d.isAfter(last(DateTime.sunday, 3, 31)) && d.isBefore(last(DateTime.sunday, 10, 31));
+      start = last(DateTime.sunday, 3, 31).subtract(winter);
+      end = last(DateTime.sunday, 10, 31).subtract(summerOffset);
     } else {
       // Egypt: last Friday of April to the end of the last Thursday of October.
-      final end = last(DateTime.thursday, 10, 31).add(const Duration(days: 1));
-      summer = d.isAfter(last(DateTime.friday, 4, 30)) && d.isBefore(end);
+      start = last(DateTime.friday, 4, 30).subtract(winter);
+      end = last(DateTime.thursday, 10, 31).add(const Duration(days: 1)).subtract(summerOffset);
     }
-    return Duration(hours: summer ? 3 : 2);
+    final summer = !d.isBefore(start) && d.isBefore(end);
+    return summer ? summerOffset : winter;
+  }
+
+  /// The branch's calendar day at [now] (date only), so "today" follows the
+  /// branch and not the phone's time zone (GAP-069).
+  DateTime today([DateTime? now]) {
+    final utc = (now ?? DateTime.now()).toUtc();
+    final wall = utc.add(offsetAt(utc));
+    return DateTime(wall.year, wall.month, wall.day);
+  }
+
+  /// [today] of [locale], or the phone's day when the branch is unknown.
+  static DateTime todayOf(BranchLocale? locale, [DateTime? now]) {
+    if (locale != null) return locale.today(now);
+    final local = (now ?? DateTime.now()).toLocal();
+    return DateTime(local.year, local.month, local.day);
   }
 
   /// [at] as the branch's wall clock. Server times are UTC; a time picked on
