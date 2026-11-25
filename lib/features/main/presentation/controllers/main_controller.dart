@@ -29,12 +29,16 @@ class MainController extends GetxController with WidgetsBindingObserver {
     if (Get.isRegistered<NotificationService>()) {
       Get.find<NotificationService>().registerDevice();
     }
+    // A notification tapped at launch waited for this page (GAP-051).
+    NotificationService.routerReady();
   }
 
   /// Numbers may be old after the app sat in the background.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) Get.find<SessionService>().notifyOrderChanged();
+    if (state != AppLifecycleState.resumed) return;
+    Get.find<SessionService>().notifyOrderChanged();
+    if (Get.isRegistered<NotificationService>()) Get.find<NotificationService>().refreshRegistration();
   }
 
   void changeTab(int index) {
@@ -51,6 +55,7 @@ class MainController extends GetxController with WidgetsBindingObserver {
 
   @override
   void onClose() {
+    NotificationService.routerGone();
     WidgetsBinding.instance.removeObserver(this);
     super.onClose();
   }

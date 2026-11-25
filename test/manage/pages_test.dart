@@ -329,7 +329,7 @@ void main() {
     await _finish(tester);
   });
 
-  testWidgets('a notification without an order only marks read state', (tester) async {
+  testWidgets('a notification without an order opens the page it links to', (tester) async {
     final server = _server();
     await _open(tester, server, Routes.notificationsRoute, locale: 'en');
 
@@ -337,7 +337,8 @@ void main() {
     await _settle(tester);
 
     expect(_writes(server), isEmpty, reason: 'it was already read');
-    expect(Get.currentRoute, Routes.notificationsRoute);
+    // GAP-084: "/reviews" opens the reviews page instead of doing nothing.
+    expect(Get.currentRoute, Routes.reviewsRoute);
 
     await _finish(tester);
   });

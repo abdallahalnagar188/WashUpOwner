@@ -109,18 +109,45 @@ class LiveBranch {
 }
 
 /// `alerts` was empty when checked, so only these common fields are read.
+enum AlertSeverity {
+  info,
+  warning,
+  danger;
+
+  static AlertSeverity fromKey(String? key) =>
+      AlertSeverity.values.firstWhere((s) => s.name == key, orElse: () => AlertSeverity.warning);
+}
+
+/// `VendorAlert` of `/vendor/dashboard` (GAP-079): the detail is `description`,
+/// with a severity and the portal link it opens.
 class DashboardAlert {
   final String id;
   final LocalizedText title;
   final LocalizedText? body;
+  final AlertSeverity severity;
+  final String? href;
 
-  const DashboardAlert({required this.id, required this.title, this.body});
+  const DashboardAlert({
+    required this.id,
+    required this.title,
+    this.body,
+    this.severity = AlertSeverity.warning,
+    this.href,
+  });
 
-  factory DashboardAlert.fromJson(Map<String, dynamic> json) => DashboardAlert(
-        id: json['id']?.toString() ?? '',
-        title: LocalizedText.fromJson(json['title']),
-        body: json['body'] == null ? null : LocalizedText.fromJson(json['body']),
-      );
+  factory DashboardAlert.fromJson(Map<String, dynamic> json) {
+    // `body` is what older builds read; the server sends `description`.
+    final detail = json['description'] ?? json['body'];
+    final text = detail == null ? null : LocalizedText.fromJson(detail);
+    final href = json['href']?.toString();
+    return DashboardAlert(
+      id: json['id']?.toString() ?? '',
+      title: LocalizedText.fromJson(json['title']),
+      body: text == null || (text.ar.trim().isEmpty && text.en.trim().isEmpty) ? null : text,
+      severity: AlertSeverity.fromKey(json['severity']?.toString()),
+      href: href == null || href.isEmpty ? null : href,
+    );
+  }
 }
 
 class ChartPoint {

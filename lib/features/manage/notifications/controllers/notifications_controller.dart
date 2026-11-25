@@ -7,6 +7,7 @@ import '../../../../commons/models/json_read.dart';
 import '../../../../core/enums/enums.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/routing/href_router.dart';
 import '../../../../core/utils/utils.dart';
 import '../../common/controllers/manage_controller.dart';
 
@@ -34,7 +35,8 @@ class NotificationsController extends PagedController<AppNotification> {
     load();
   }
 
-  /// Marks it read without waiting, then opens its order if it has one.
+  /// Marks it read without waiting, then opens what it links to: its order,
+  /// or the page of a review, shift, staff or settings link (GAP-084).
   Future<void> open(AppNotification item) async {
     if (!item.read) {
       final index = items.indexWhere((n) => n.id == item.id);
@@ -45,7 +47,13 @@ class NotificationsController extends PagedController<AppNotification> {
       });
     }
     final orderId = item.orderId;
-    if (orderId != null) await Get.toNamed(Routes.orderRoute, arguments: orderId);
+    if (orderId != null) {
+      await Get.toNamed(Routes.orderRoute, arguments: orderId);
+      return;
+    }
+    // A link to this same list would only reopen it.
+    if (HrefRouter.parse(item.href)?.route == Routes.notificationsRoute) return;
+    HrefRouter.open(item.href);
   }
 
   Future<void> readAll() async {

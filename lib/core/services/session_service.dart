@@ -7,6 +7,7 @@ import '../network/api_client.dart';
 import '../enums/enums.dart';
 import '../local/cache_controller.dart';
 import '../local/cache_helper.dart';
+import 'notification_service.dart';
 
 class SessionService extends GetxService {
   static const String allBranches = 'all';
@@ -60,7 +61,12 @@ class SessionService extends GetxService {
       _setAccount(me);
       return true;
     } on ApiException catch (e) {
-      return e.statusCode == 401 || e.statusCode == 403 ? false : null;
+      if (e.statusCode == 401 || e.statusCode == 403) {
+        // The saved session is over: this phone must stop receiving its pushes (GAP-049).
+        await _push?.forgetDevice();
+        return false;
+      }
+      return null;
     } catch (_) {
       return null;
     }
@@ -89,12 +95,22 @@ class SessionService extends GetxService {
   }
 
   Future<void> signOut() async {
+    // While the session is still valid, so the server drops this phone's row.
+    await _push?.unregisterDevice();
     await _api.logout();
     await clearLocal();
   }
 
-  /// For a session the server already ended.
+  /// Push delivery, when the app runs with it (tests do not).
+  NotificationService? get _push =>
+      Get.isRegistered<NotificationService>() ? Get.find<NotificationService>() : null;
+
+  /// For a session the server already ended, and the last step of every sign-out.
+  /// GAP-049: the push token is dropped here too, so an expired or refused
+  /// session (which can no longer call `push/unregister`) stops getting the
+  /// previous account's booking and payment notifications.
   Future<void> clearLocal() async {
+    await _push?.forgetDevice();
     await CacheController().logout();
     await CacheController().setter(key: CacheKeys.selectedBranch, value: null);
     account.value = null;

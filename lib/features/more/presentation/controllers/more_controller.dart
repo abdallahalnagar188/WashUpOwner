@@ -17,15 +17,14 @@ class MoreController extends GetxController {
       danger: true,
     );
     if (!ok) return;
-    if (Get.isRegistered<NotificationService>()) {
-      await Get.find<NotificationService>().unregisterDevice();
-    }
+    // Unregisters and drops this phone's push token first (GAP-049).
     await Get.find<SessionService>().signOut();
     await leaveToLogin();
   }
 
   /// The next account must not see this one's screens.
   static Future<void> leaveToLogin() async {
+    NotificationService.routerGone();
     await Get.offAllNamed(Routes.loginRoute);
     Get.delete<HomeController>(force: true);
     Get.delete<LiveController>(force: true);
