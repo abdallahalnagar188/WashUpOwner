@@ -15,6 +15,9 @@ class FormRules {
   /// Review replies and review reports (`requireText(…, 5)`).
   static const int reviewTextMin = 5;
 
+  /// A new password (`assertNewPassword`, GAP-044).
+  static const int passwordMin = 8;
+
   /// Payment methods `collect_payment` accepts (GAP-043): the server refuses `online`.
   static const List<String> paymentMethods = ['cash', 'card'];
 

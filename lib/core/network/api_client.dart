@@ -49,6 +49,9 @@ class ApiClient {
     '/vendor/auth/refresh',
     '/vendor/auth/forgot-password',
     '/vendor/auth/reset-password',
+    // A wrong current password answers 401 too; VendorApi.changePassword renews the
+    // token first, so here a 401 is the server's answer, not an expired session.
+    '/vendor/auth/change-password',
   };
 
   ApiClient({required TokenStore tokens, Dio? dio})

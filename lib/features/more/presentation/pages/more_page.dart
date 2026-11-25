@@ -7,6 +7,7 @@ import '../../../../commons/models/owner_account.dart';
 import '../../../../commons/widgets/common_widgets.dart';
 import '../../../../commons/widgets/effects/pressable.dart';
 import '../../../../commons/widgets/layout/brand_header.dart';
+import '../../../../commons/widgets/sheets/app_sheet.dart';
 import '../../../../core/constance/app_colors.dart';
 import '../../../../core/data/vendor_api.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
@@ -15,6 +16,7 @@ import '../../../../core/local/theme_controller.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/session_service.dart';
 import '../controllers/more_controller.dart';
+import '../widgets/change_password_sheet.dart';
 
 class _MenuEntry {
   final IconData icon;
@@ -104,6 +106,18 @@ class MorePage extends GetView<MoreController> {
                             onChanged: theme.setDarkMode,
                             activeTrackColor: AppColors.primary,
                           ),
+                        ),
+                      ),
+                      Divider(height: 1, indent: 62.w, color: AppColors.line),
+                      // GAP-044: replace a temporary password without the web portal.
+                      _PreferenceRow(
+                        icon: Iconsax.lock,
+                        title: 'more.changePassword'.tr,
+                        onTap: () => showAppSheet<void>(context, const ChangePasswordSheet()),
+                        trailing: Icon(
+                          Directionality.of(context) == TextDirection.rtl ? Iconsax.arrow_left_2 : Iconsax.arrow_right_3,
+                          size: 16.r,
+                          color: AppColors.ink500,
                         ),
                       ),
                     ],

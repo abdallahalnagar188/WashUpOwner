@@ -46,6 +46,23 @@ class VendorApi {
     }
   }
 
+  /// Changes the signed-in account's password (GAP-044). The server wants at
+  /// least 8 characters and checks the current one. Returns its outcome text.
+  Future<String?> changePassword({required String currentPassword, required String newPassword}) async {
+    // Renews an expired access token first (auth/me refreshes on 401), because
+    // change-password answers 401 for a wrong current password as well.
+    await _client.get('/vendor/auth/me');
+    return ApiClient.outcome(await _client.postRaw('/vendor/auth/change-password', body: {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    }));
+  }
+
+  /// Asks for a reset link (GAP-044). The server gives the same answer whether
+  /// or not the number has an account; the link opens the partner web portal.
+  Future<String?> forgotPassword({required String phone}) async =>
+      ApiClient.outcome(await _client.postRaw('/vendor/auth/forgot-password', body: {'phone': phone}));
+
   Future<DashboardSummary> dashboard({required DashboardPeriod period, required String branchId}) async =>
       DashboardSummary.fromJson(
         await _client.get('/vendor/dashboard', query: {'period': period.apiValue, 'branchId': branchId})

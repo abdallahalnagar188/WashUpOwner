@@ -5,10 +5,12 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../commons/widgets/common_widgets.dart';
+import '../../../../commons/widgets/sheets/app_sheet.dart';
 import '../../../../core/constance/app_colors.dart';
 import '../../../../core/extensions/sized_box_extension.dart';
 import '../../../../core/utils/system_ui.dart';
 import '../controllers/auth_controller.dart';
+import '../widgets/forgot_password_sheet.dart';
 
 class LoginPage extends GetView<AuthController> {
   const LoginPage({super.key});
@@ -93,6 +95,19 @@ class LoginPage extends GetView<AuthController> {
                               color: AppColors.ink500,
                             ),
                           ),
+                        ),
+                      ),
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: TextButton(
+                          onPressed: () => showAppSheet<void>(
+                            context,
+                            ForgotPasswordSheet(
+                              initialPhone: controller.phone.text,
+                              initialCountry: controller.country.value,
+                            ),
+                          ),
+                          child: Text('auth.forgot'.tr),
                         ),
                       ),
                       Obx(() {
