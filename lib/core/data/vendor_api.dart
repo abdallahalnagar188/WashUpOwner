@@ -77,6 +77,7 @@ class VendorApi {
     required String view,
     required String tab,
     required String branchId,
+    String source = 'all',
     int page = 1,
   }) =>
       _client.getPage(
@@ -85,6 +86,8 @@ class VendorApi {
           'view': view,
           'tab': tab,
           'branchId': branchId,
+          // GAP-084; "all" is left out by the client.
+          'source': source,
           'sort': 'scheduledAt',
           'order': view == 'bookings' ? 'asc' : 'desc',
           'page': page,

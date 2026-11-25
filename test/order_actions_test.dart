@@ -73,6 +73,17 @@ void main() {
     });
   });
 
+  test('the orders list sends a source filter and leaves out "all" (GAP-084)', () async {
+    final server = FakeServer((_) => FakeReply.ok([], pagination: {'total': 0, 'has_next': false}));
+    final api = VendorApi(fakeClient(server, MemoryTokens()), MemoryTokens());
+
+    await api.orders(view: 'bookings', tab: 'today', branchId: 'br_1', source: 'phone');
+    await api.orders(view: 'bookings', tab: 'today', branchId: 'br_1');
+
+    expect(server.requests.first.query['source'], 'phone');
+    expect(server.requests.last.query.containsKey('source'), isFalse);
+  });
+
   group('actions follow the server (GAP-074)', () {
     test('list rows read allowedActions when the server sends them', () {
       expect(row().allowedActions, isNull);

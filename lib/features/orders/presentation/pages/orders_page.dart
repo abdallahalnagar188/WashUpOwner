@@ -47,6 +47,39 @@ class OrdersPage extends GetView<OrdersController> {
           );
         }),
         10.height,
+        // GAP-084: filter by source, and confirm the morning's bookings in one tap.
+        Obx(() {
+          final pending = controller.canBulkConfirm ? controller.pendingIds.length : 0;
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Row(
+              children: [
+                for (final source in OrdersController.sources[controller.view.value]!) ...[
+                  AppChip(
+                    label: source == 'all' ? 'orders.source.all'.tr : 'source.$source'.tr,
+                    flat: true,
+                    selected: controller.source.value == source,
+                    onTap: () => controller.selectSource(source),
+                  ),
+                  8.width,
+                ],
+                if (pending > 0) ...[
+                  8.width,
+                  AppButton(
+                    title: 'orders.bulkConfirm'.trParams({'count': '$pending'}),
+                    small: true,
+                    expanded: false,
+                    icon: Iconsax.tick_circle,
+                    loading: controller.confirming.value,
+                    onTap: controller.bulkConfirm,
+                  ),
+                ],
+              ],
+            ),
+          );
+        }),
+        10.height,
         Expanded(
           child: Obx(
             () => AnimatedSwitcher(
