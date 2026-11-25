@@ -163,3 +163,38 @@ class StaffList {
     );
   }
 }
+
+/// What `POST /vendor/staff` says about the new member's login (GAP-077).
+class NewStaffLogin {
+  /// Shown once; null when the server made no login.
+  final String? password;
+
+  /// The server's text. Without a password it says why (the number already has
+  /// a Wash Up login, or the server cannot create logins).
+  final String? message;
+
+  const NewStaffLogin({this.password, this.message});
+
+  static final RegExp _inMessage = RegExp(r'المؤقتة\s*[:：]?\s*([A-Za-z0-9_\-]{4,})');
+
+  /// Prefers a structured field; older servers only write it into the message:
+  /// "كلمة المرور المؤقتة: XXXX (…)".
+  factory NewStaffLogin.fromReply(Map<String, dynamic> reply) {
+    final data = reply['data'];
+    String? given;
+    if (data is Map) {
+      final login = data['login'];
+      given = (data['tempPassword'] ?? data['temp_password'] ?? (login is Map ? login['tempPassword'] : null))
+          ?.toString()
+          .trim();
+    }
+    final message = reply['message']?.toString().trim();
+    final password = (given != null && given.isNotEmpty)
+        ? given
+        : _inMessage.firstMatch(message ?? '')?.group(1);
+    return NewStaffLogin(
+      password: password,
+      message: message == null || message.isEmpty || message.toUpperCase() == 'OK' ? null : message,
+    );
+  }
+}

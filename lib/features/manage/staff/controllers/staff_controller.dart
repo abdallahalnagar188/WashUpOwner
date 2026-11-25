@@ -61,10 +61,10 @@ class StaffController extends LoadController<StaffList> {
     required num maxDiscountPct,
     required Map<String, bool> permissions,
   }) async {
-    String? password;
+    NewStaffLogin? login;
     final ok = await write(
       () async {
-        password = await api.createStaff(
+        login = await api.createStaff(
           name: name,
           phone: phone,
           role: role,
@@ -80,7 +80,11 @@ class StaffController extends LoadController<StaffList> {
     if (ok) {
       Future<void>.delayed(
         const Duration(milliseconds: 350),
-        () => Get.dialog<void>(TempPasswordDialog(password: password), barrierDismissible: false),
+        () => Get.dialog<void>(
+          // Without a password the server's own reason is shown, not a generic "success" (GAP-077).
+          TempPasswordDialog(password: login?.password, note: login?.message),
+          barrierDismissible: false,
+        ),
       );
     }
     return ok;

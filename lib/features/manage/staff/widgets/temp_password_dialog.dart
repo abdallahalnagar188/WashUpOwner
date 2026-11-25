@@ -13,7 +13,10 @@ import '../../../../core/utils/utils.dart';
 class TempPasswordDialog extends StatelessWidget {
   final String? password;
 
-  const TempPasswordDialog({super.key, required this.password});
+  /// The server's text, shown when it made no login (number taken, no key).
+  final String? note;
+
+  const TempPasswordDialog({super.key, required this.password, this.note});
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +29,12 @@ class TempPasswordDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('staff.tempPasswordTitle'.tr, style: text.titleLarge),
+            Text((value == null ? 'staff.noLoginTitle' : 'staff.tempPasswordTitle').tr, style: text.titleLarge),
             10.height,
             Text(
-              (value == null ? 'staff.noTempPassword' : 'staff.tempPasswordBody').tr,
+              value != null
+                  ? 'staff.tempPasswordBody'.tr
+                  : (note == null ? 'staff.noTempPassword'.tr : 'staff.noLoginBody'.trParams({'reason': note!})),
               textAlign: TextAlign.center,
               style: text.bodyMedium,
             ),

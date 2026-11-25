@@ -144,9 +144,9 @@ class VendorManageApi {
         await _client.getRaw('/vendor/staff', query: {'branchId': branchId, 'period': period}),
       );
 
-  /// Returns the new account's temporary password. The server only gives it
-  /// inside the reply's `message`, and only this once.
-  Future<String?> createStaff({
+  /// Returns the new account's login: its temporary password (shown only this
+  /// once) or the server's reason for not making one (GAP-077).
+  Future<NewStaffLogin> createStaff({
     required String name,
     required String phone,
     required String role,
@@ -162,11 +162,7 @@ class VendorManageApi {
       'maxDiscountPct': maxDiscountPct,
       'permissions': permissions,
     });
-    final data = reply['data'];
-    final given = data is Map ? data['tempPassword']?.toString() : null;
-    if (given != null && given.isNotEmpty) return given;
-    // Older servers only put it in the message: "كلمة المرور المؤقتة: XXXX (…)".
-    return RegExp(r'المؤقتة\s*:?\s*([^\s(]+)').firstMatch(reply['message']?.toString() ?? '')?.group(1);
+    return NewStaffLogin.fromReply(reply);
   }
 
   Future<void> updateStaff(
