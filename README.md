@@ -26,3 +26,7 @@ flutter run
 flutter analyze
 flutter test
 ```
+
+**CI** (`.github/workflows/ci.yml`, GAP-055) runs both on every pull request and on pushes to
+`main` / `ebrahim`, with Flutter 3.47.7 (the customer app's pinned version, GAP-057; bump them
+together). No secrets: the tests fake the API.
